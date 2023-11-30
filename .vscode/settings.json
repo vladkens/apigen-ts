@@ -1,0 +1,14 @@
+{
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.formatOnSave": true,
+  "files.exclude": {
+    "node_modules": true,
+    "coverage": true,
+    "dist": true
+  },
+  "search.exclude": {},
+  "code-runner.executorMap": {
+    "typescript": "node --loader tsm",
+    "javascript": "node"
+  }
+}
