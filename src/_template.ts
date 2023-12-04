@@ -28,32 +28,48 @@ export class ApiClient {
     return d
   }
 
-  async Fetch<T>(method: string, path: string, config: apigen.Req = {}): Promise<T> {
-    const fallback = globalThis.location?.origin ?? undefined
-    const url = new URL(`${this.Config.baseUrl}/${path}`.replace(/\/+/g, "/"), fallback)
-    for (const [k, v] of Object.entries(config?.search ?? {})) {
+  async ParseError(rep: Response) {
+    try {
+      // try to parse domain error from response body
+      return await rep.json()
+    } catch (e) {
+      // otherwise return response as is
+      throw rep
+    }
+  }
+
+  async Fetch<T>(method: string, path: string, opts: apigen.Req = {}): Promise<T> {
+    let base = this.Config.baseUrl
+    if (globalThis.location && (base === "" || base.startsWith("/"))) {
+      base = `${globalThis.location.origin}${base.endsWith("/") ? base : `/${base}`}`
+    }
+
+    const url = new URL(path, base)
+    for (const [k, v] of Object.entries(opts?.search ?? {})) {
       url.searchParams.append(k, Array.isArray(v) ? v.join(",") : (v as string))
     }
 
-    const headers = new Headers({ ...this.Config.headers, ...config.headers })
+    const headers = new Headers({ ...this.Config.headers, ...opts.headers })
     const ct = headers.get("content-type") ?? "application/json"
 
-    let body: FormData | string | undefined = undefined
-    if (ct === "multipart/form-data") {
+    let body: FormData | URLSearchParams | string | undefined = undefined
+
+    if (ct === "multipart/form-data" || ct === "application/x-www-form-urlencoded") {
       headers.delete("content-type") // https://stackoverflow.com/a/61053359/3664464
-      body = new FormData()
-      for (const [k, v] of Object.entries(config.body as Record<string, string>)) {
+      body = ct === "multipart/form-data" ? new FormData() : new URLSearchParams()
+      for (const [k, v] of Object.entries(opts.body as Record<string, string>)) {
         body.append(k, v)
       }
     }
 
-    if (ct === "application/json" && typeof config.body !== "string") {
+    if (ct === "application/json" && typeof opts.body !== "string") {
       headers.set("content-type", "application/json")
-      body = JSON.stringify(config.body)
+      body = JSON.stringify(opts.body)
     }
 
-    const rep = await fetch(url.toString(), { method, ...config, headers, body })
-    if (!rep.ok) throw rep
+    const credentials = opts.credentials ?? "include"
+    const rep = await fetch(url.toString(), { method, ...opts, headers, body, credentials })
+    if (!rep.ok) throw this.ParseError(rep)
 
     const rs = await rep.text()
     try {

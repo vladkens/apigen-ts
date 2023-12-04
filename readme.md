@@ -1,21 +1,13 @@
 # OpenAPI TypeScript client generator
 
 <div align="center">
-  <a href="https://npmjs.org/package/apigen-ts">
-    <img src="https://badgen.net/npm/v/apigen-ts" alt="version" />
-  </a>
-  <a href="https://github.com/vladkens/apigen-ts/actions">
-    <img src="https://github.com/vladkens/apigen-ts/workflows/test/badge.svg" alt="test status" />
-  </a>
-  <a href="https://packagephobia.now.sh/result?p=apigen-ts">
-    <img src="https://badgen.net/packagephobia/publish/apigen-ts" alt="size" />
-  </a>
-  <a href="https://npmjs.org/package/apigen-ts">
-    <img src="https://badgen.net/npm/dm/apigen-ts" alt="downloads" />
-  </a>
-  <a href="https://github.com/vladkens/apigen-ts/blob/main/LICENSE">
-    <img src="https://badgen.net/github/license/vladkens/apigen-ts" alt="license" />
-  </a>
+
+[<img src="https://badgen.net/npm/v/apigen-ts" alt="version" />](https://npmjs.org/package/apigen-ts)
+[<img src="https://github.com/vladkens/apigen-ts/workflows/test/badge.svg" alt="test status" />](https://github.com/vladkens/apigen-ts/actions)
+[<img src="https://badgen.net/packagephobia/publish/apigen-ts" alt="size" />](https://packagephobia.now.sh/result?p=apigen-ts)
+[<img src="https://badgen.net/npm/dm/apigen-ts" alt="downloads" />](https://npmjs.org/package/apigen-ts)
+[<img src="https://badgen.net/github/license/vladkens/apigen-ts" alt="license" />](https://github.com/vladkens/apigen-ts/blob/main/LICENSE)
+
 </div>
 
 ## Features
