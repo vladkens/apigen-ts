@@ -1,5 +1,6 @@
 // Use uppercase for names in ApiClient to avoid conflict with the generated code
 
+// eslint-disable-next-line @typescript-eslint/no-namespace
 namespace apigen {
   export type Config = { baseUrl: string; headers: Record<string, string> }
   export type Req = Omit<RequestInit, "body"> & {
@@ -69,7 +70,7 @@ export class ApiClient {
 
     const credentials = opts.credentials ?? "include"
     const rep = await fetch(url.toString(), { method, ...opts, headers, body, credentials })
-    if (!rep.ok) throw this.ParseError(rep)
+    if (!rep.ok) throw await this.ParseError(rep)
 
     const rs = await rep.text()
     try {
