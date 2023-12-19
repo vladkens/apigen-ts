@@ -1,19 +1,20 @@
-// Use uppercase for names in ApiClient to avoid conflict with the generated code
+// Note: Use uppercase for names in ApiClient to avoid conflict with the generated code
 
-// eslint-disable-next-line @typescript-eslint/no-namespace
-namespace apigen {
-  export type Config = { baseUrl: string; headers: Record<string, string> }
-  export type Req = Omit<RequestInit, "body"> & {
-    search?: Record<string, unknown>
-    body?: unknown
-  }
+interface ApigenConfig {
+  baseUrl: string
+  headers: Record<string, string>
+}
+
+interface ApigenRequest extends Omit<RequestInit, "body"> {
+  search?: Record<string, unknown>
+  body?: unknown
 }
 
 export class ApiClient {
   ISO_FORMAT = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d*)?(?:[-+]\d{2}:?\d{2}|Z)?$/
-  Config: apigen.Config
+  Config: ApigenConfig
 
-  constructor(config?: Partial<apigen.Config>) {
+  constructor(config?: Partial<ApigenConfig>) {
     this.Config = { baseUrl: "/", headers: {}, ...config }
   }
 
@@ -39,7 +40,7 @@ export class ApiClient {
     }
   }
 
-  async Fetch<T>(method: string, path: string, opts: apigen.Req = {}): Promise<T> {
+  async Fetch<T>(method: string, path: string, opts: ApigenRequest = {}): Promise<T> {
     let base = this.Config.baseUrl
     if (globalThis.location && (base === "" || base.startsWith("/"))) {
       base = `${globalThis.location.origin}${base.endsWith("/") ? base : `/${base}`}`
@@ -79,4 +80,8 @@ export class ApiClient {
       return rs as unknown as T
     }
   }
+
+  // apigen:modules
 }
+
+// apigen:types

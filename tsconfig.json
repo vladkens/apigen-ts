@@ -12,6 +12,6 @@
     "esModuleInterop": true,
     "skipLibCheck": true
   },
-  "include": ["src", "test"],
-  "exclude": ["node_modules"]
+  "include": ["."],
+  "exclude": ["node_modules", "scripts/clients"]
 }

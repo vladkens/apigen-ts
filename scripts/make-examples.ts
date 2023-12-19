@@ -1,7 +1,6 @@
 import { exec } from "child_process"
-import fs from "fs/promises"
 import util from "node:util"
-import { apigen } from "./main"
+import { apigen } from "../src/main"
 
 const sources: { name: string; url: string }[] = [
   { name: "petstore-v2", url: "https://petstore.swagger.io/v2/swagger.json" },
@@ -9,12 +8,12 @@ const sources: { name: string; url: string }[] = [
 ]
 
 const main = async () => {
-  await fs.rm("./examples", { recursive: true, force: true })
+  // await fs.rm("./examples", { recursive: true, force: true })
 
   for (const source of sources) {
     const outfile = `./examples/${source.name}.ts`
     console.log(`>> generating ${outfile} from ${source.url}`)
-    await apigen(source.url, outfile)
+    await apigen({ source: source.url, output: outfile, parseDates: true })
   }
 
   const cmd = `yarn tsc --noEmit examples/*.ts`

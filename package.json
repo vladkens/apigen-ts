@@ -18,9 +18,8 @@
     "build": "rm -rf dist && pkgroll && cp ./src/_template.ts ./dist && ls -lah dist",
     "test": "uvu -r tsm test '\\.test\\.ts$'",
     "test-cov": "c8 --include=src yarn test",
-    "test-watch": "watchexec -c -e ts 'clear && yarn test'",
     "format": "prettier --write .",
-    "ci": "yarn test-cov && yarn build"
+    "ci": "tsc --noEmit && yarn test-cov && yarn build"
   },
   "dependencies": {
     "@redocly/openapi-core": "^1.4.1",
@@ -32,7 +31,7 @@
     "swagger2openapi": "^7.0.8"
   },
   "devDependencies": {
-    "@types/node": "^18.18.0",
+    "@types/node": "^20.10.5",
     "c8": "^8.0.1",
     "fetch-mock": "^9.11.0",
     "pkgroll": "^2.0.1",
@@ -46,10 +45,21 @@
     "prettier": "^3.0.0",
     "typescript": "^5.0.0"
   },
-  "bin": {
-    "apigen-ts": "./dist/cli.js"
-  },
   "files": [
     "dist"
-  ]
+  ],
+  "types": "./dist/main.d.cts",
+  "exports": {
+    "require": {
+      "types": "./dist/main.d.cts",
+      "default": "./dist/main.cjs"
+    },
+    "import": {
+      "types": "./dist/main.d.mts",
+      "default": "./dist/main.mjs"
+    }
+  },
+  "bin": {
+    "apigen-ts": "./dist/cli.js"
+  }
 }
