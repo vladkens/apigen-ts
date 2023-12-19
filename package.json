@@ -1,7 +1,7 @@
 {
   "type": "module",
   "name": "apigen-ts",
-  "version": "0.0.3",
+  "version": "0.1.0",
   "license": "MIT",
   "author": "Vlad Pronsky <v.pronsky@gmail.com>",
   "repository": "vladkens/apigen-ts",
