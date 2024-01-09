@@ -232,6 +232,8 @@ export const generateAst = async (ctx: Context) => {
 }
 
 export const loadSchema = async (url: string, upgrade = true): Promise<Oas3Definition> => {
+  if (url.startsWith("file://")) url = url.substring(7)
+
   const { bundle } = await redocly.bundle({
     ref: url,
     config: await redocly.createConfig({}),

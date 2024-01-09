@@ -1,7 +1,5 @@
 import { enumerate, filterNullable } from "array-utils-ts"
-import { exec } from "child_process"
 import fs from "fs/promises"
-import util from "node:util"
 import { loadSchema } from "../src/generator"
 import { apigen } from "../src/main"
 
@@ -53,7 +51,7 @@ const generateClients = async () => {
   for (const [i, file] of enumerate(files, 1)) {
     if (debugId && i !== debugId) continue
 
-    const src = `${BaseDir}/specs/${file}`
+    const src = await fs.realpath(`${BaseDir}/specs/${file}`)
     const out = `${BaseDir}/clients/${file.replace(".json", ".ts")}`
 
     const doc = JSON.parse(await fs.readFile(src, "utf-8"))
@@ -64,7 +62,7 @@ const generateClients = async () => {
     const tag = `[${i.toString().padStart(len, " ")}/${files.length}] (${ver}) ${src}`
 
     try {
-      await apigen({ source: src, output: out, parseDates: true })
+      await apigen({ source: `file://${src}`, output: out, parseDates: true })
       console.log(`${tag} generated`)
     } catch (err) {
       console.log(tag, "failed", err)
@@ -82,9 +80,12 @@ const generateClients = async () => {
   console.log(`versions: ${Object.entries(versions).map((x) => x.join(" - ")).join(", ")}`)
   if (failed.length) console.log(`failed ids: ${failed.join(", ")}`)
 
-  const cmd = `yarn tsc --noEmit ${BaseDir}/clients/*.ts`
-  const { stdout, stderr } = await util.promisify(exec)(cmd)
-  console.log(stdout, stderr)
+  // NODE_OPTIONS="--max-old-space-size=8192" yarn tsc --noEmit ${BaseDir}/clients/*.ts
+  // const cmd = `yarn tsc --noEmit ${BaseDir}/clients/*.ts`
+  // const { stdout, stderr } = await util.promisify(exec)(cmd, {
+  //   env: { ...process.env, NODE_OPTIONS: "--max-old-space-size=8192" },
+  // })
+  // console.log(stdout, stderr)
 }
 
 const main = async () => {

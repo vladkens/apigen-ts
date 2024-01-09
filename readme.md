@@ -3,10 +3,10 @@
 <div align="center">
 
 [<img src="https://badgen.net/npm/v/apigen-ts" alt="version" />](https://npmjs.org/package/apigen-ts)
-[<img src="https://github.com/vladkens/apigen-ts/workflows/test/badge.svg" alt="test status" />](https://github.com/vladkens/apigen-ts/actions)
 [<img src="https://badgen.net/packagephobia/publish/apigen-ts" alt="size" />](https://packagephobia.now.sh/result?p=apigen-ts)
 [<img src="https://badgen.net/npm/dm/apigen-ts" alt="downloads" />](https://npmjs.org/package/apigen-ts)
 [<img src="https://badgen.net/github/license/vladkens/apigen-ts" alt="license" />](https://github.com/vladkens/apigen-ts/blob/main/LICENSE)
+[<img src="https://badgen.net/static/-/buy%20me%20a%20coffee/ff813f?icon=buymeacoffee&label" alt="donate" />](https://buymeacoffee.com/vladkens)
 
 </div>
 
@@ -15,7 +15,7 @@
 </div>
 
 <div align="center">
-  TypeScript api client generator from OpenAPI specification
+  TypeScript HTTP Client Generator from OpenAPI Specification
 </div>
 
 ## Features
@@ -37,7 +37,7 @@ yarn install -D apigen-ts
 
 ## Usage
 
-### Generate
+### 1. Generate
 
 ```sh
 # From url
@@ -49,9 +49,9 @@ yarn apigen-ts ./openapi.json ./api-client.ts
 
 Run `yarn apigen-ts --help` for more options. See examples of generated clients [here](./examples/).
 
-### Import
+### 2. Import
 
-```typescript
+```ts
 import { ApiClient } from "./api-client"
 
 const api = new ApiClient({
@@ -60,9 +60,9 @@ const api = new ApiClient({
 })
 ```
 
-### Use
+### 3. Use
 
-```typescript
+```ts
 // GET /pet/{petId}
 await api.pet.getPetById(1) // -> Pet
 
@@ -77,18 +77,29 @@ await api.user.updateUser("username", { firstName: "John" })
 
 ### Login flow
 
-```typescript
+```ts
 const { token } = await api.auth.login({ usename, password })
 api.Config.headers = { Authorization: token }
 
 await api.protectedRoute.get() // here authenticated
 ```
 
+### Automatic date parsing
+
+```sh
+yarn apigen-ts ./openapi.json ./api-client.ts --parse-dates
+```
+
+```ts
+const pet = await api.pet.getPetById(1)
+const createdAt: Date = pet.createdAt // date parsed from string with format=date-time
+```
+
 ### NodeJS API
 
 Create file like `apigen.mjs` with content:
 
-```javascript
+```js
 import { apigen } from "apigen-ts"
 
 await apigen({

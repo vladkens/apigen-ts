@@ -33,10 +33,8 @@ export class ApiClient {
 
   async ParseError(rep: Response) {
     try {
-      // try to parse domain error from response body
       return await rep.json()
     } catch (e) {
-      // otherwise return response as is
       throw rep
     }
   }
@@ -58,7 +56,7 @@ export class ApiClient {
     let body: FormData | URLSearchParams | string | undefined = undefined
 
     if (ct === "multipart/form-data" || ct === "application/x-www-form-urlencoded") {
-      headers.delete("content-type") // https://stackoverflow.com/a/61053359/3664464
+      headers.delete("content-type")
       body = ct === "multipart/form-data" ? new FormData() : new URLSearchParams()
       for (const [k, v] of Object.entries(opts.body as Record<string, string>)) {
         body.append(k, v)
