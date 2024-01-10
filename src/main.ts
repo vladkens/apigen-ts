@@ -32,6 +32,11 @@ export const apigen = async (config: Partial<Config> & Pick<Config, "source" | "
   code = code.replace("// apigen:types", printCode(types))
   code = code.replace("class ApiClient", `class ${ctx.name}`)
 
-  await fs.mkdir(dirname(config.output), { recursive: true })
-  await fs.writeFile(config.output, await formatCode(code))
+  const result = await formatCode(code)
+  if (config.output === null) {
+    process.stdout.write(result)
+  } else {
+    await fs.mkdir(dirname(config.output), { recursive: true })
+    await fs.writeFile(config.output, result)
+  }
 }

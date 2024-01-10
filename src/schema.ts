@@ -23,7 +23,6 @@ export const unref = <T extends Oas3RequestBody | Oas3Parameter | Oas3Schema>(
       ctx.doc,
     )
 
-    // console.log(parts, obj)
     if (obj) return obj as unknown as T
 
     console.warn(`${ctx.logTag} ref ${s.$ref} not found`)

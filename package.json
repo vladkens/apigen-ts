@@ -1,7 +1,7 @@
 {
   "type": "module",
   "name": "apigen-ts",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "license": "MIT",
   "author": "Vlad Pronsky <v.pronsky@gmail.com>",
   "repository": "vladkens/apigen-ts",
@@ -22,7 +22,7 @@
     "ci": "tsc --noEmit && yarn test-cov && yarn build"
   },
   "dependencies": {
-    "@redocly/openapi-core": "^1.4.1",
+    "@redocly/openapi-core": "^1.6.0",
     "@types/lodash-es": "^4.17.12",
     "@types/swagger2openapi": "^7.0.4",
     "array-utils-ts": "^0.1.2",
@@ -31,8 +31,8 @@
     "swagger2openapi": "^7.0.8"
   },
   "devDependencies": {
-    "@types/node": "^20.10.5",
-    "c8": "^8.0.1",
+    "@types/node": "^20.10.8",
+    "c8": "^9.0.0",
     "fetch-mock": "^9.11.0",
     "pkgroll": "^2.0.1",
     "prettier": "^3.1.0",
@@ -48,6 +48,7 @@
   "files": [
     "dist"
   ],
+  "main": "./dist/main.js",
   "types": "./dist/main.d.cts",
   "exports": {
     "require": {

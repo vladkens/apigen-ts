@@ -7,7 +7,7 @@ export type OpName = [string, string]
 
 export type Config = {
   source: string
-  output: string
+  output: string | null
   name: string
   parseDates: boolean
   resolveName?: (ctx: Context, op: OpConfig, proposal: OpName) => OpName | undefined
@@ -31,8 +31,8 @@ export const initCtx = (config?: Partial<Context>): Context => {
 export const getCliConfig = () => {
   const argv = cli({
     name: "apigen",
-    // version: "0.0.1",
-    parameters: ["<source>", "<output>"],
+    version: "0.1.1",
+    parameters: ["<source>", "[output]"],
     flags: {
       name: {
         type: String,
@@ -49,7 +49,7 @@ export const getCliConfig = () => {
 
   const config: Config = {
     source: argv._.source,
-    output: argv._.output,
+    output: argv._.output ?? null,
     name: argv.flags.name,
     parseDates: argv.flags.parseDates,
   }

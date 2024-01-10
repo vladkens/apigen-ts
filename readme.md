@@ -12,22 +12,19 @@
 
 <div align="center">
   <img src="./logo.svg" alt="apigen-ts logo" height="80" />
-</div>
-
-<div align="center">
-  TypeScript HTTP Client Generator from OpenAPI Specification
+  <div>TypeScript client generator from OpenAPI schema</div>
 </div>
 
 ## Features
 
 - Generates ready to use `ApiClient` with types (using `fetch`)
 - Single output file, minimal third-party code
-- Load schema from JSON / YAML, locally and remote
+- Loads schemas from JSON / YAML, locally and remote
 - Ability to customize `fetch` with your custom function
-- Uses `type` instead of `interface`, no problem with declaration merging
 - Automatic formating with Prettier
 - Can parse dates from date-time format (`--parse-dates` flag)
 - Support OpenAPI v2, v3, v3.1
+- Can be used with npx as well
 
 ## Install
 
@@ -47,7 +44,7 @@ yarn apigen-ts https://petstore3.swagger.io/api/v3/openapi.json ./api-client.ts
 yarn apigen-ts ./openapi.json ./api-client.ts
 ```
 
-Run `yarn apigen-ts --help` for more options. See examples of generated clients [here](./examples/).
+Run `yarn apigen-ts --help` for more options. Examples of generated clients [here](./examples/).
 
 ### 2. Import
 
@@ -95,7 +92,37 @@ const pet = await api.pet.getPetById(1)
 const createdAt: Date = pet.createdAt // date parsed from string with format=date-time
 ```
 
-### NodeJS API
+### Errors handling
+
+An exception will be thrown for all unsuccessful return codes.
+
+```ts
+try {
+  const pet = await api.pet.getPetById(404)
+} catch (e) {
+  console.log(e) // parse error depend of your domain model, e is awaited response.json()
+}
+```
+
+Also you can define custom function to parse error:
+
+```ts
+class MyClient extends ApiClient {
+  async ParseError(rep: Response) {
+    // do what you want
+    return { code: "API_ERROR" }
+  }
+}
+
+try {
+  const api = MyClient()
+  const pet = await api.pet.getPetById(404)
+} catch (e) {
+  console.log(e) // e is { code: "API_ERROR" }
+}
+```
+
+### Node.js API
 
 Create file like `apigen.mjs` with content:
 
@@ -120,7 +147,14 @@ await apigen({
 
 Then run with: `node apigen.mjs`
 
-## Useful for development
+## Compare
+
+- [openapi-typescript-codegen](https://github.com/ferdikoomen/openapi-typescript-codegen) ([npm](https://www.npmjs.com/package/openapi-typescript-codegen)): no single file mode [#1263](https://github.com/ferdikoomen/openapi-typescript-codegen/issues/1263#issuecomment-1502890838)
+- [openapi-typescript](https://github.com/drwpow/openapi-typescript) ([npm](https://www.npmjs.com/package/openapi-typescript)): low level api; no named types export to use in client code
+- [openapi-generator-cli](https://github.com/OpenAPITools/openapi-generator-cli) ([npm](https://www.npmjs.com/package/@openapitools/openapi-generator-cli)): wrapper around java lib
+- [swagger-typescript-api](https://github.com/acacode/swagger-typescript-api) ([npm](https://www.npmjs.com/package/swagger-typescript-api)): complicated configuration; user-api breaking changes between versions
+
+## Development
 
 - https://ts-ast-viewer.com
 - https://jsonschemalint.com

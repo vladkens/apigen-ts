@@ -42,8 +42,10 @@ export class ApiClient {
 
   async Fetch<T>(method: string, path: string, opts: ApigenRequest = {}): Promise<T> {
     let base = this.Config.baseUrl
-    if (globalThis.location && (base === "" || base.startsWith("/"))) {
-      base = `${globalThis.location.origin}${base.endsWith("/") ? base : `/${base}`}`
+    if ("location" in globalThis && (base === "" || base.startsWith("/"))) {
+      // make ts happy in pure nodejs environment, should never pass here
+      const { location } = globalThis as unknown as { location: { origin: string } }
+      base = `${location.origin}${base.endsWith("/") ? base : `/${base}`}`
     }
 
     const url = new URL(path, base)
@@ -76,7 +78,7 @@ export class ApiClient {
 
     const rs = await rep.text()
     try {
-      return this.PopulateDates(JSON.parse(rs))
+      return this.PopulateDates(JSON.parse(rs) as T)
     } catch (e) {
       return rs as unknown as T
     }

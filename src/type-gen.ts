@@ -19,7 +19,7 @@ const Keywords = new Set([
   // "abstract", "as", "async", "await", "constructor", "declare", "from", "get", "is", "module", 
   // "namespace", "of", "require", "set", "type",
   "Record", "Partial", "Pick", "Omit", "Exclude", "Extract", // ts keywords
-  "Date", "object" // ts type names
+  "Date", "object", "Response" // ts type names
 ])
 
 export const normalizeIdentifier = (val: string, asVar = false) => {

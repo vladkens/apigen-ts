@@ -1,4 +1,4 @@
-import * as prettier from "prettier"
+import path from "node:path"
 import ts from "typescript"
 
 const f = ts.factory
@@ -26,6 +26,12 @@ export const printCode = (nodes: ts.Statement[]) => {
 }
 
 export const formatCode = async (code: string) => {
-  const options = await prettier.resolveConfig(import.meta.url)
-  return prettier.format(code, { ...options, parser: "typescript" })
+  try {
+    const prettier = await import("prettier")
+    // file: https://github.com/prettier/prettier/issues/10698#issuecomment-845075379
+    const options = await prettier.resolveConfig(path.join(process.cwd(), "file"))
+    return prettier.format(code, { ...options, parser: "typescript" })
+  } catch (e) {
+    return code
+  }
 }

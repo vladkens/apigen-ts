@@ -80,7 +80,7 @@ const generateClients = async () => {
   console.log(`versions: ${Object.entries(versions).map((x) => x.join(" - ")).join(", ")}`)
   if (failed.length) console.log(`failed ids: ${failed.join(", ")}`)
 
-  // NODE_OPTIONS="--max-old-space-size=8192" yarn tsc --noEmit ${BaseDir}/clients/*.ts
+  // NODE_OPTIONS="--max-old-space-size=8192" yarn tsc --noEmit ./scripts/clients/*.ts
   // const cmd = `yarn tsc --noEmit ${BaseDir}/clients/*.ts`
   // const { stdout, stderr } = await util.promisify(exec)(cmd, {
   //   env: { ...process.env, NODE_OPTIONS: "--max-old-space-size=8192" },
