@@ -1,11 +1,11 @@
 // Note: Use uppercase for names in ApiClient to avoid conflict with the generated code
 
-interface ApigenConfig {
+export interface ApigenConfig {
   baseUrl: string
   headers: Record<string, string>
 }
 
-interface ApigenRequest extends Omit<RequestInit, "body"> {
+export interface ApigenRequest extends Omit<RequestInit, "body"> {
   search?: Record<string, unknown>
   body?: unknown
 }
