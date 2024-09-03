@@ -3,7 +3,7 @@ import ts from "typescript"
 import { test } from "uvu"
 import { equal } from "uvu/assert"
 import { initCtx } from "../src/config"
-import { printCode } from "../src/pritner"
+import { printCode } from "../src/printer"
 import { makeType, makeTypeAlias } from "../src/type-gen"
 
 test("type inline", async () => {

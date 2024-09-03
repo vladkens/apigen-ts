@@ -4,7 +4,7 @@ import ts from "typescript"
 import { fileURLToPath } from "url"
 import { Config, initCtx } from "./config"
 import { generateAst, loadSchema } from "./generator"
-import { formatCode, printCode } from "./pritner"
+import { formatCode, printCode } from "./printer"
 
 export const apigen = async (config: Partial<Config> & Pick<Config, "source" | "output">) => {
   const doc = await loadSchema(config.source)

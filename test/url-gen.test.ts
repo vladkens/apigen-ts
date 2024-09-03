@@ -3,7 +3,7 @@ import ts from "typescript"
 import { test } from "uvu"
 import { equal } from "uvu/assert"
 import { prepareUrl } from "../src/generator"
-import { printCode } from "../src/pritner"
+import { printCode } from "../src/printer"
 
 test("url template", async () => {
   const t = async (url: string, replacements: Record<string, string>) => {
