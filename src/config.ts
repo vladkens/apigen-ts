@@ -1,6 +1,7 @@
 import { Oas3Definition } from "@redocly/openapi-core"
 import { Oas3Operation } from "@redocly/openapi-core/lib/typings/openapi"
 import { cli } from "cleye"
+import { name, version } from "../package.json"
 
 export type OpConfig = Oas3Operation & { method: string; path: string }
 export type OpName = [string, string]
@@ -30,8 +31,8 @@ export const initCtx = (config?: Partial<Context>): Context => {
 
 export const getCliConfig = () => {
   const argv = cli({
-    name: "apigen",
-    version: "0.1.1",
+    name,
+    version,
     parameters: ["<source>", "[output]"],
     flags: {
       name: {
