@@ -115,11 +115,32 @@ class MyClient extends ApiClient {
 }
 
 try {
-  const api = MyClient()
+  const api = new MyClient()
   const pet = await api.pet.getPetById(404)
 } catch (e) {
   console.log(e) // e is { code: "API_ERROR" }
 }
+```
+
+### Base url resolving
+
+You can modify how the endpoint url is created. By default [URL constructor](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) used to resolve endpoint url like: `new URL(path, baseUrl)` which has specific resolving [rules](https://developer.mozilla.org/en-US/docs/Web/API/URL_API/Resolving_relative_references). E.g.:
+
+- `new URL("/v2/cats", "https://example.com/v1/") // -> https://example.com/v2/cats`
+- `new URL("v2/cats", "https://example.com/v1/") // -> https://example.com/v1/v2/cats`
+
+If you want to have custom endpoint url resolving rules, you can override `PrepareFetchUrl` method. For more details see [issue](https://github.com/vladkens/apigen-ts/issues/2).
+
+```ts
+class MyClient extends ApiClient {
+  PrepareFetchUrl(path: string) {
+    return new URL(`${this.Config.baseUrl}/${path}`.replace(/\/{2,}/g, "/"))
+  }
+}
+
+const api = new MyClient({ baseUrl: "https://example.com/v1" })
+// will call: https://example.com/v1/pet/ instead of https://example.com/pet/
+const pet = await api.pet.getPetById(404)
 ```
 
 ### Node.js API

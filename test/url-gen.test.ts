@@ -7,7 +7,7 @@ import { printCode } from "../src/pritner"
 
 test("url template", async () => {
   const t = async (url: string, replacements: Record<string, string>) => {
-    const code = await printCode([prepareUrl(url, replacements) as unknown as ts.Statement])
+    const code = printCode([prepareUrl(url, replacements) as unknown as ts.Statement])
     return trim(trim(code.trim(), ";"), '`"')
   }
 

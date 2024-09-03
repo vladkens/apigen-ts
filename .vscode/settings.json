@@ -10,5 +10,9 @@
   "code-runner.executorMap": {
     "typescript": "node --loader tsm",
     "javascript": "node"
+  },
+  "[markdown]": {
+    "editor.wordWrap": "wordWrapColumn",
+    "editor.wordWrapColumn": 99
   }
 }
