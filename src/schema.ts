@@ -1,4 +1,5 @@
 import {
+  Oas3_1Schema,
   Oas3Operation,
   Oas3Parameter,
   Oas3RequestBody,
@@ -8,8 +9,10 @@ import {
 import { get } from "lodash-es"
 import { Context } from "./config"
 
+export type OAS3 = Oas3Schema | Oas3_1Schema
+
 // todo: wrong <T> typing
-export const unref = <T extends Oas3RequestBody | Oas3Parameter | Oas3Schema>(
+export const unref = <T extends Oas3RequestBody | Oas3Parameter | OAS3>(
   ctx: Context,
   s?: Referenced<T>,
 ) => {

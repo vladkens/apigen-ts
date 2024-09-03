@@ -3,7 +3,7 @@ import { filterEmpty } from "array-utils-ts"
 import { isArray, uniq, upperFirst } from "lodash-es"
 import ts from "typescript"
 import { Context } from "./config"
-import { unref } from "./schema"
+import { OAS3, unref } from "./schema"
 
 const f = ts.factory
 
@@ -35,7 +35,7 @@ export const normalizeIdentifier = (val: string, asVar = false) => {
   return name
 }
 
-const makeInlineEnum = (s: Oas3Schema) => {
+const makeInlineEnum = (s: OAS3) => {
   if (!s.enum) return undefined
 
   const values = filterEmpty(s.enum)
@@ -68,7 +68,7 @@ const makeInlineEnum = (s: Oas3Schema) => {
   return undefined
 }
 
-export const makeType = (ctx: Context, s?: Referenced<Oas3Schema>): ts.TypeNode => {
+export const makeType = (ctx: Context, s?: Referenced<OAS3>): ts.TypeNode => {
   const mk = makeType.bind(null, ctx)
 
   if (s === undefined) return f.createKeywordTypeNode(ts.SyntaxKind.VoidKeyword)
@@ -112,7 +112,7 @@ export const makeType = (ctx: Context, s?: Referenced<Oas3Schema>): ts.TypeNode 
   if ("type" in s) {
     // openapi v3.1 can have type as array
     if (Array.isArray(s.type)) {
-      const types: Oas3Schema[] = []
+      const types: OAS3[] = []
       for (const type of s.type) {
         if (type === "null") types.push({ type: "null" })
         else types.push({ ...s, type })

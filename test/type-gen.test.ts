@@ -40,7 +40,6 @@ test("type inline", async () => {
   t({ oneOf: [{ type: "string" }, { type: "number" }] }, "string | number")
   t({ anyOf: [{ type: "string" }, { type: "number" }] }, "string | number")
   t({ allOf: [{ type: "string" }, { type: "number" }] }, "string & number")
-  // @ts-expect-error https://github.com/Redocly/redocly-cli/pull/1362
   t({ type: ["string", "number"] }, "string | number")
 
   // arrays of basic types
@@ -51,7 +50,6 @@ test("type inline", async () => {
   t({ type: "array", items: { type: "null" } }, "null[]")
   t({ type: "array", items: { type: "object" } }, "object[]") // should be unknown?
   t({ type: "array", items: { type: "file" } }, "unknown[]")
-  // @ts-expect-error https://github.com/Redocly/redocly-cli/pull/1362
   t({ type: "array", items: { type: ["string", "number"] } }, "(string | number)[]")
 
   // arrays of arrays
