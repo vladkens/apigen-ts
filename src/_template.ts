@@ -1,8 +1,11 @@
 // Note: Use uppercase for names in ApiClient to avoid conflict with the generated code
 
+type Headers = Record<string, string>
+export type ApigenHeaders = Headers | ((method: string, path: string) => Headers | Promise<Headers>)
+
 export interface ApigenConfig {
   baseUrl: string
-  headers: Record<string, string>
+  headers: ApigenHeaders
 }
 
 export interface ApigenRequest extends Omit<RequestInit, "body"> {
@@ -58,7 +61,12 @@ export class ApiClient {
       url.searchParams.append(k, Array.isArray(v) ? v.join(",") : (v as string))
     }
 
-    const headers = new Headers({ ...this.Config.headers, ...opts.headers })
+    const configHeaders =
+      typeof this.Config.headers === "function"
+        ? await this.Config.headers(method, path)
+        : this.Config.headers
+
+    const headers = new Headers({ ...configHeaders, ...opts.headers })
     const ct = headers.get("content-type") ?? "application/json"
 
     let body: FormData | URLSearchParams | string | undefined = undefined
