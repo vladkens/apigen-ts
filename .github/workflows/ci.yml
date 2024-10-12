@@ -37,19 +37,11 @@ jobs:
       - run: yarn install --frozen-lockfile
       - run: yarn ci
 
-      - name: Generate changelog
-        uses: orhun/git-cliff-action@v4
-        id: changelog
-        with:
-          args: --latest --strip header
-
       - run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Create Github Release
         uses: softprops/action-gh-release@v2
-        with:
-          body: ${{ steps.changelog.outputs.content }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
