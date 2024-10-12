@@ -168,6 +168,33 @@ await apigen({
 
 Then run with: `node apigen.mjs`
 
+## Usage with different backend frameworks
+
+### FastAPI
+
+By default `apigen-ts` generates noisy method names when used with FastAPI. This can be fixed by [custom resolving](https://fastapi.tiangolo.com/advanced/path-operation-advanced-configuration/#using-the-path-operation-function-name-as-the-operationid) for operations ids.
+
+```py
+from fastapi import FastAPI
+from fastapi.routing import APIRoute
+
+app = FastAPI()
+
+# add your routes here
+
+def update_operation_ids(app: FastAPI) -> None:
+    for route in app.routes:
+        if isinstance(route, APIRoute):
+            ns = route.tags[0] if route.tags else "general"
+            route.operation_id = f"{ns}_{route.name}".lower()
+
+
+# this function should be after all routes added
+update_operation_ids(app)
+```
+
+_Note: If you want FastAPI to be added as preset, open PR please._
+
 ## Compare
 
 - [openapi-typescript-codegen](https://github.com/ferdikoomen/openapi-typescript-codegen) ([npm](https://www.npmjs.com/package/openapi-typescript-codegen)): no single file mode [#1263](https://github.com/ferdikoomen/openapi-typescript-codegen/issues/1263#issuecomment-1502890838)
