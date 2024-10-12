@@ -1,6 +1,6 @@
 import { Oas3Schema, Referenced } from "@redocly/openapi-core/lib/typings/openapi"
 import { filterEmpty } from "array-utils-ts"
-import { isArray, uniq, upperFirst } from "lodash-es"
+import { isArray, isBoolean, uniq, upperFirst } from "lodash-es"
 import ts from "typescript"
 import { Context } from "./config"
 import { OAS3, unref } from "./schema"
@@ -68,6 +68,19 @@ const makeInlineEnum = (s: OAS3) => {
   return undefined
 }
 
+const makeObject = (ctx: Context, s: OAS3): ts.TypeNode => {
+  if (s.type !== "object") throw new Error(`makeObject: not an object ${JSON.stringify(s)}`)
+
+  if (s.additionalProperties && !isBoolean(s.additionalProperties)) {
+    return f.createTypeReferenceNode("Record", [
+      f.createKeywordTypeNode(ts.SyntaxKind.StringKeyword),
+      makeType(ctx, s.additionalProperties),
+    ])
+  }
+
+  return f.createKeywordTypeNode(ts.SyntaxKind.ObjectKeyword)
+}
+
 export const makeType = (ctx: Context, s?: Referenced<OAS3>): ts.TypeNode => {
   const mk = makeType.bind(null, ctx)
 
@@ -123,7 +136,7 @@ export const makeType = (ctx: Context, s?: Referenced<OAS3>): ts.TypeNode => {
 
     let t: ts.TypeNode
     // if (s.type === "object") t = f.createKeywordTypeNode(ts.SyntaxKind.UnknownKeyword)
-    if (s.type === "object") t = f.createKeywordTypeNode(ts.SyntaxKind.ObjectKeyword)
+    if (s.type === "object") t = makeObject(ctx, s)
     else if (s.type === "boolean") t = f.createKeywordTypeNode(ts.SyntaxKind.BooleanKeyword)
     else if (s.type === "number") t = f.createKeywordTypeNode(ts.SyntaxKind.NumberKeyword)
     else if (s.type === "string") t = f.createKeywordTypeNode(ts.SyntaxKind.StringKeyword)

@@ -117,6 +117,19 @@ test("type inline", async () => {
     { type: "object", properties: { a: { type: "string" } }, additionalProperties: true },
     "{ a?: string }",
   )
+
+  t({ type: "object", additionalProperties: { type: "number" } }, "Record<string, number>")
+
+  t(
+    {
+      type: "object",
+      additionalProperties: {
+        type: "array",
+        items: { oneOf: [{ type: "string" }, { type: "number" }] },
+      },
+    },
+    "Record<string, (string | number)[]>",
+  )
 })
 
 test("type alias", async () => {

@@ -141,7 +141,7 @@ export class ApiClient {
 
   store = {
     getInventory: () => {
-      return this.Fetch<object>("get", "/store/inventory", {})
+      return this.Fetch<Record<string, number>>("get", "/store/inventory", {})
     },
 
     placeOrder: (body: Order) => {
