@@ -12,7 +12,7 @@
 
 <div align="center">
   <img src="./logo.svg" alt="apigen-ts logo" height="80" />
-  <div>TypeScript client generator from OpenAPI schema</div>
+  <div>Simple typed OpenAPI client generator</div>
 </div>
 
 ## Features
