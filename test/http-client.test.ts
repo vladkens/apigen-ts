@@ -7,10 +7,11 @@ const t = async <T>(body: T) => {
   try {
     const baseUrl = "http://localhost"
     const client = new ApiClient({ baseUrl })
-    fetchMock.mock(`${baseUrl}`, { body: JSON.stringify(body) })
+    fetchMock.mockGlobal()
+    fetchMock.route(`${baseUrl}`, { body: JSON.stringify(body) })
     return client.Fetch<T>("get", "/")
   } finally {
-    fetchMock.restore()
+    fetchMock.unmockGlobal()
   }
 }
 

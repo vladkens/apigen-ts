@@ -1,0 +1,12 @@
+FROM node:alpine
+ARG TS_VER=5.7.3
+
+WORKDIR /app
+COPY package.json yarn.lock ./
+RUN yarn install --frozen-lockfile
+RUN yarn add --dev typescript@${TS_VER}
+
+COPY tsconfig.json ./
+COPY src ./src
+COPY test ./test
+CMD ["sh", "-c", "/app/node_modules/.bin/tsc --version; yarn test"]
