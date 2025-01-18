@@ -11,6 +11,7 @@ export type Config = {
   output: string | null
   name: string
   parseDates: boolean
+  inlineEnums: boolean
   resolveName?: (ctx: Context, op: OpConfig, proposal: OpName) => OpName | undefined
 }
 
@@ -21,8 +22,9 @@ export const initCtx = (config?: Partial<Context>): Context => {
     source: "",
     output: "",
     name: "ApiClient",
-    parseDates: false,
     doc: { openapi: "3.1.0" },
+    parseDates: false,
+    inlineEnums: false,
     ...config,
     logTag: "",
     usedNames: new Set(),
@@ -45,6 +47,11 @@ export const getCliConfig = () => {
         description: "parse dates as Date objects",
         default: false,
       },
+      inlineEnums: {
+        type: Boolean,
+        description: "use inline enums instead of enum types",
+        default: false,
+      },
     },
   })
 
@@ -53,6 +60,7 @@ export const getCliConfig = () => {
     output: argv._.output ?? null,
     name: argv.flags.name,
     parseDates: argv.flags.parseDates,
+    inlineEnums: argv.flags.inlineEnums,
   }
 
   return config

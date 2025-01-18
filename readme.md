@@ -92,6 +92,26 @@ const pet = await api.pet.getPetById(1)
 const createdAt: Date = pet.createdAt // date parsed from string with format=date-time
 ```
 
+### String union as enums
+
+You can generate string literal union instead of native enums in case you want to run in Node.js environment with [type-stripping](https://nodejs.org/api/typescript.html#type-stripping). To achive this pass `--inline-enums` command line argument or use `inlineEnums: true` in Node.js API.
+
+```sh
+yarn apigen-ts ./openapi.json ./api-client.ts --inline-enums
+```
+
+This will generate:
+
+```ts
+type MyEnum = "OptionA" | "OptionB"
+
+// instead of
+enum MyEnum = {
+  OptionA = "OptionA",
+  OptionB = "OptionB"
+}
+```
+
 ### Errors handling
 
 An exception will be thrown for all unsuccessful return codes.
@@ -156,6 +176,7 @@ await apigen({
   // everything below is optional
   name: "MyApiClient", // default "ApiClient"
   parseDates: true, // default false
+  inlineEnums: false, // default false, use string literal union instead of enum
   resolveName(ctx, op, proposal) {
     // proposal is [string, string] which represents module.funcName
     if (proposal[0] === "users") return // will use default proposal

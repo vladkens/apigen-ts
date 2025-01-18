@@ -6,9 +6,14 @@ import { initCtx } from "../src/config"
 import { printCode } from "../src/printer"
 import { makeType, makeTypeAlias } from "../src/type-gen"
 
+type Cfg = {
+  parseDates?: boolean
+  inlineEnums?: boolean
+}
+
 test("type inline", async () => {
-  const t = (l: Oas3_1Schema, r: string, parseDates = false) => {
-    const ctx = initCtx({ parseDates })
+  const t = (l: Oas3_1Schema, r: string, cfg?: Cfg) => {
+    const ctx = initCtx({ ...cfg })
     const res = makeType(ctx, l)
     const txt = printCode([res as unknown as ts.Statement])
       .replace(/"(\w+)"(\??):/g, "$1$2:")
@@ -78,7 +83,7 @@ test("type inline", async () => {
   // custom types
   t({ type: "string", format: "binary" }, "File")
   t({ type: "string", format: "date-time" }, "string")
-  t({ type: "string", format: "date-time" }, "Date", true)
+  t({ type: "string", format: "date-time" }, "Date", { parseDates: true })
 
   // object
   t({ type: "object", properties: { a: { type: "string" } } }, "{ a?: string }")
@@ -133,8 +138,8 @@ test("type inline", async () => {
 })
 
 test("type alias", async () => {
-  const t = (l: Oas3Schema & { name?: string }, r: string, parseDates = false) => {
-    const ctx = initCtx({ parseDates })
+  const t = (l: Oas3Schema & { name?: string }, r: string, cfg?: Cfg) => {
+    const ctx = initCtx({ ...cfg })
     const res = makeTypeAlias(ctx, l.name ?? "t", l)
     const txt = printCode([res as unknown as ts.Statement])
       .replace(";", "")
@@ -162,6 +167,8 @@ test("type alias", async () => {
   // enums
   t({ type: "string", enum: ["a", "b"] }, `enum t { A = "a", B = "b" }`)
   t({ type: "string", enum: ["a", "b", "b"] }, `enum t { A = "a", B = "b" }`)
+  t({ type: "string", enum: ["Aaa", "bBB"] }, `enum t { Aaa = "Aaa", BBB = "bBB" }`)
+  t({ type: "string", enum: ["_aA", "_bB"] }, `enum t { _aA = "_aA", _bB = "_bB" }`)
   // t({ type: "number", enum: [1, 2] }, `enum t { A = 1, B = 2 }`) // no number enum support
   t({ type: "number", enum: [1, 2] }, `type t = 1 | 2`)
   t({ type: "boolean", enum: [true] }, `type t = true`)
@@ -173,6 +180,14 @@ test("type alias", async () => {
   // equal(await t({ type: "string", enum: ["a", "b"] }), `enum t { A = "a", B = "b", }`)
   // equal(await t({ type: "number", enum: ["a", "b"] }), `enum t { A = "a", B = "b", }`)
   // equal(await t({ type: "number", enum: [1, 2] }), `enum t { A = "a", B = "b", }`)
+
+  // inline enums
+  t({ type: "string", enum: ["a", "b"] }, `type t = "a" | "b"`, { inlineEnums: true })
+  t({ type: "string", enum: ["a", "b", "b"] }, `type t = "a" | "b"`, { inlineEnums: true })
+  t({ type: "string", enum: ["a", "b", ""] }, `type t = "a" | "b"`, { inlineEnums: true })
+  t({ type: "string", enum: ["Aaa", "bBB"] }, `type t = "Aaa" | "bBB"`, { inlineEnums: true })
+  t({ type: "string", enum: ["Aaa", "bBB"] }, `type t = "Aaa" | "bBB"`, { inlineEnums: true })
+  t({ type: "string", enum: ["_aA", "_bB"] }, `type t = "_aA" | "_bB"`, { inlineEnums: true })
 })
 
 test.run()

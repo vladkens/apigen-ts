@@ -168,7 +168,7 @@ const isStringEnum = (s: Referenced<Oas3Schema>): s is Oas3Schema & { enum: stri
 }
 
 export const makeTypeAlias = (ctx: Context, name: string, s: Referenced<Oas3Schema>) => {
-  if (isStringEnum(s)) {
+  if (isStringEnum(s) && !ctx.inlineEnums) {
     const tokens1 = uniq(s.enum)
     const tokens2 = filterEmpty(tokens1)
 

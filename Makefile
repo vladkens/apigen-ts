@@ -1,6 +1,7 @@
 .PHONY: test-ts test-ts-matrix clean
 
-default: test-ts-matrix
+default:
+	yarn ci
 
 test-ts:
 	@echo "-- $(v) --------------------"
