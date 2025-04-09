@@ -13,6 +13,7 @@ export type Config = {
   parseDates: boolean
   inlineEnums: boolean
   resolveName?: (ctx: Context, op: OpConfig, proposal: OpName) => OpName | undefined
+  headers: Record<string, string>
 }
 
 export type Context = Config & { doc: Oas3Definition; logTag: string; usedNames: Set<string> }
@@ -25,10 +26,21 @@ export const initCtx = (config?: Partial<Context>): Context => {
     doc: { openapi: "3.1.0" },
     parseDates: false,
     inlineEnums: false,
+    headers: {},
     ...config,
     logTag: "",
     usedNames: new Set(),
   }
+}
+
+const parseHeaders = (items: string[]): Record<string, string> => {
+  const headers: Record<string, string> = {}
+  for (const item of items) {
+    const [key, val] = item.split(":")
+    if (key && val) headers[key.trim()] = val.trim()
+  }
+
+  return headers
 }
 
 export const getCliConfig = () => {
@@ -39,18 +51,25 @@ export const getCliConfig = () => {
     flags: {
       name: {
         type: String,
-        description: "api class name to export",
+        description: "API class name to export",
         default: "ApiClient",
       },
       parseDates: {
         type: Boolean,
-        description: "parse dates as Date objects",
+        description: "Parse dates as Date objects",
         default: false,
       },
       inlineEnums: {
         type: Boolean,
-        description: "use inline enums instead of enum types",
+        description: "Use inline enums instead of enum types",
         default: false,
+      },
+      header: {
+        type: [String],
+        alias: "H",
+        description:
+          'HTTP header as key=value (e.g., -H "x-api-key: your-key"). Used only when generating code.',
+        default: [],
       },
     },
   })
@@ -61,6 +80,7 @@ export const getCliConfig = () => {
     name: argv.flags.name,
     parseDates: argv.flags.parseDates,
     inlineEnums: argv.flags.inlineEnums,
+    headers: parseHeaders(argv.flags.header),
   }
 
   return config

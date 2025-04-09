@@ -7,7 +7,7 @@ import { generateAst, loadSchema } from "./generator"
 import { formatCode, printCode } from "./printer"
 
 export const apigen = async (config: Partial<Config> & Pick<Config, "source" | "output">) => {
-  const doc = await loadSchema(config.source)
+  const doc = await loadSchema({ url: config.source, headers: config.headers })
   const ctx = initCtx({ ...config, doc })
   const { modules, types } = await generateAst(ctx)
 

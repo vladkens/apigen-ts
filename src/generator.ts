@@ -1,4 +1,4 @@
-import redocly, { Oas3Definition } from "@redocly/openapi-core"
+import redocly, { BaseResolver, Oas3Definition } from "@redocly/openapi-core"
 import { filterEmpty, filterNullable } from "array-utils-ts"
 import { isObject, lowerFirst, sortBy, uniqBy, upperFirst } from "lodash-es"
 import { convertObj } from "swagger2openapi"
@@ -231,13 +231,29 @@ export const generateAst = async (ctx: Context) => {
   return { modules, types }
 }
 
-export const loadSchema = async (url: string, upgrade = true): Promise<Oas3Definition> => {
+export const loadSchema = async ({
+  url,
+  upgrade = true,
+  headers = {},
+}: {
+  url: string
+  upgrade?: boolean
+  headers?: Record<string, string>
+}): Promise<Oas3Definition> => {
   if (url.startsWith("file://")) url = url.substring(7)
 
   const { bundle } = await redocly.bundle({
     ref: url,
     config: await redocly.createConfig({}),
     removeUnusedComponents: false,
+    externalRefResolver: new BaseResolver({
+      http: {
+        headers: Object.entries(headers).map(([name, value]) => {
+          // https://github.com/isaacs/minimatch?tab=readme-ov-file#noglobstar
+          return { name, value, matches: "**" }
+        }),
+      },
+    }),
   })
 
   if (bundle.parsed.swagger && upgrade) {

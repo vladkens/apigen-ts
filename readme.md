@@ -41,11 +41,14 @@ yarn add -D apigen-ts
 ### 1. Generate
 
 ```sh
+# From file
+yarn apigen-ts ./openapi.json ./api-client.ts
+
 # From url
 yarn apigen-ts https://petstore3.swagger.io/api/v3/openapi.json ./api-client.ts
 
-# From file
-yarn apigen-ts ./openapi.json ./api-client.ts
+# From protected url
+yarn apigen-ts https://secret-api.example.com ./api-client.ts -H "x-api-key: secret-key"
 ```
 
 Run `yarn apigen-ts --help` for more options. Examples of generated clients [here](./examples/).
@@ -181,6 +184,7 @@ await apigen({
   name: "MyApiClient", // default "ApiClient"
   parseDates: true, // default false
   inlineEnums: false, // default false, use string literal union instead of enum
+  headers: { "x-api-key": "secret-key" }, // Custom HTTP headers to use when fetching schema
   resolveName(ctx, op, proposal) {
     // proposal is [string, string] which represents module.funcName
     if (proposal[0] === "users") return // will use default proposal

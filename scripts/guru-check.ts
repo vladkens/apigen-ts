@@ -27,7 +27,7 @@ const loadSpecs = async () => {
     if (await fs.stat(out).catch(() => false)) continue
 
     try {
-      const doc = await loadSchema(spec.url, false)
+      const doc = await loadSchema({ url: spec.url, upgrade: false })
       await fs.writeFile(out, JSON.stringify(doc, null, 2))
       console.log(`>> loaded ${spec.name} (${i} of ${specs.length})`)
     } catch (err) {
