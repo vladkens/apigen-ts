@@ -12,7 +12,6 @@
 
 <div align="center">
   <img src="./logo.svg" alt="apigen-ts logo" height="80" />
-  <div>Simple typed OpenAPI client generator</div>
 </div>
 
 ## Features
