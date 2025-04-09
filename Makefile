@@ -1,7 +1,10 @@
-.PHONY: test-ts test-ts-matrix clean
+.PHONY: test test-ts test-matrix-ts clean
 
 default:
 	yarn ci
+
+test:
+	yarn test
 
 test-ts:
 	@echo "-- $(v) --------------------"
@@ -9,7 +12,7 @@ test-ts:
 	@docker -l warning build -f Dockerfile.test --build-arg TS_VER=$(v) -t $(name) .
 	@docker run $(name)
 
-test-ts-matrix:
+test-matrix-ts:
 	@make test-ts v=5.0.4
 	@make test-ts v=5.1.6
 	@make test-ts v=5.2.2
@@ -18,6 +21,7 @@ test-ts-matrix:
 	@make test-ts v=5.5.4
 	@make test-ts v=5.6.3
 	@make test-ts v=5.7.3
+	@make test-ts v=5.8.3
 	@make test-ts v=next
 
 clean:

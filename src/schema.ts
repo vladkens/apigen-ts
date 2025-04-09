@@ -63,7 +63,7 @@ export const getReqSchema = (ctx: Context, config: Oas3Operation) => {
   return undefined
 }
 
-export const getRepSchema = (ctx: Context, config: Oas3Operation): Oas3Schema | undefined => {
+export const getRepSchema = (ctx: Context, config: Oas3Operation): OAS3 | undefined => {
   const successCodes = Object.keys(config.responses ?? {})
     .filter((x) => x.startsWith("2"))
     .filter((x) => get(config, ["responses", x, "content"]))

@@ -1,9 +1,10 @@
-import { Oas3Schema, Oas3_1Schema } from "@redocly/openapi-core"
+import { Oas3Schema } from "@redocly/openapi-core"
 import ts from "typescript"
 import { test } from "uvu"
 import { equal } from "uvu/assert"
 import { initCtx } from "../src/config"
 import { printCode } from "../src/printer"
+import { OAS3 } from "../src/schema"
 import { makeType, makeTypeAlias } from "../src/type-gen"
 
 type Cfg = {
@@ -12,7 +13,7 @@ type Cfg = {
 }
 
 test("type inline", async () => {
-  const t = (l: Oas3_1Schema, r: string, cfg?: Cfg) => {
+  const t = (l: OAS3, r: string, cfg?: Cfg) => {
     const ctx = initCtx({ ...cfg })
     const res = makeType(ctx, l)
     const txt = printCode([res as unknown as ts.Statement])
@@ -35,11 +36,16 @@ test("type inline", async () => {
   t({ type: "object" }, "object") // should be unknown?
   t({ type: "array" }, "void[]") // should be unknown?
 
-  // nullable
-  t({ type: "string", nullable: true }, "string | null")
+  // nullable (3.0)
   t({ type: "string", nullable: false }, "string")
+  t({ type: "string", nullable: true }, "string | null")
   t({ type: "number", nullable: true }, "number | null")
   t({ type: "date", nullable: true }, "unknown") // just unknown
+
+  // nullable (3.1)
+  t({ type: ["string", "null"] }, "string | null")
+  t({ type: ["number", "null"] }, "number | null")
+  t({ type: ["date", "null"] }, "unknown") // just unknown
 
   // combinations
   t({ oneOf: [{ type: "string" }, { type: "number" }] }, "string | number")

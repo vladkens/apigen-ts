@@ -38,7 +38,8 @@ export const normalizeIdentifier = (val: string, asVar = false) => {
 const makeInlineEnum = (s: OAS3) => {
   if (!s.enum) return undefined
 
-  const values = filterEmpty(s.enum)
+  // https://swagger.io/docs/specification/v3_0/data-models/enums/
+  const values = filterEmpty(s.enum) as Array<string | number | boolean>
   if (!values.length) return undefined
 
   if (!s.type) {
@@ -53,7 +54,7 @@ const makeInlineEnum = (s: OAS3) => {
   }
 
   if (s.type === "number") {
-    const tokens = uniq(values).map((x) => f.createNumericLiteral(x))
+    const tokens = uniq(values).map((x) => f.createNumericLiteral(x as number))
     return f.createUnionTypeNode(tokens.map((x) => f.createLiteralTypeNode(x)))
   }
 
@@ -79,6 +80,13 @@ const makeObject = (ctx: Context, s: OAS3): ts.TypeNode => {
   }
 
   return f.createKeywordTypeNode(ts.SyntaxKind.ObjectKeyword)
+}
+
+const makeLiteralUnion = (ctx: Context, types: string[]): ts.TypeNode => {
+  const tokens = types.map((x) => makeType(ctx, { type: x }))
+  const hasUnknown = tokens.some((x) => x.kind === ts.SyntaxKind.UnknownKeyword)
+  if (hasUnknown) return f.createKeywordTypeNode(ts.SyntaxKind.UnknownKeyword)
+  return f.createUnionTypeNode(tokens)
 }
 
 export const makeType = (ctx: Context, s?: Referenced<OAS3>): ts.TypeNode => {
@@ -108,6 +116,7 @@ export const makeType = (ctx: Context, s?: Referenced<OAS3>): ts.TypeNode => {
 
   if ("enum" in s && s.enum && !Array.isArray(s.type)) {
     const isArray = s.type === "array"
+    // @ts-expect-error todo: fix type
     const t = makeInlineEnum(isArray ? { ...s, type: s.items?.type } : s)
     if (t) return isArray ? f.createArrayTypeNode(t) : t
   }
@@ -123,26 +132,15 @@ export const makeType = (ctx: Context, s?: Referenced<OAS3>): ts.TypeNode => {
   }
 
   if ("type" in s) {
-    // openapi v3.1 can have type as array
-    if (Array.isArray(s.type)) {
-      const types: OAS3[] = []
-      for (const type of s.type) {
-        if (type === "null") types.push({ type: "null" })
-        else types.push({ ...s, type })
-      }
-
-      return mk({ oneOf: types })
-    }
-
     let t: ts.TypeNode
     // if (s.type === "object") t = f.createKeywordTypeNode(ts.SyntaxKind.UnknownKeyword)
     if (s.type === "object") t = makeObject(ctx, s)
     else if (s.type === "boolean") t = f.createKeywordTypeNode(ts.SyntaxKind.BooleanKeyword)
     else if (s.type === "number") t = f.createKeywordTypeNode(ts.SyntaxKind.NumberKeyword)
     else if (s.type === "string") t = f.createKeywordTypeNode(ts.SyntaxKind.StringKeyword)
-    else if (s.type === "array") t = f.createArrayTypeNode(mk(s.items))
     else if (s.type === "null") t = f.createLiteralTypeNode(f.createNull())
-    else if (isArray(s.type)) t = f.createUnionTypeNode(s.type.map((x) => mk({ type: x })))
+    else if (isArray(s.type)) t = makeLiteralUnion(ctx, s.type)
+    else if (s.type === "array" && !isBoolean(s.items)) t = f.createArrayTypeNode(mk(s.items))
     else {
       console.warn(`makeType: unknown type "${s.type}"`)
       return f.createKeywordTypeNode(ts.SyntaxKind.UnknownKeyword)
@@ -153,7 +151,12 @@ export const makeType = (ctx: Context, s?: Referenced<OAS3>): ts.TypeNode => {
       if (s.format === "date-time" && ctx.parseDates) t = f.createTypeReferenceNode("Date")
     }
 
-    return s.nullable ? f.createUnionTypeNode([t, f.createLiteralTypeNode(f.createNull())]) : t
+    // openapi 3.0 has nullable as boolean property
+    if ("nullable" in s && s.nullable) {
+      return f.createUnionTypeNode([t, f.createLiteralTypeNode(f.createNull())])
+    }
+
+    return t
   }
 
   // throw new Error(`makeType: unknown schema ${JSON.stringify(s)}`)
