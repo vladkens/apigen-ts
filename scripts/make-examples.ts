@@ -3,8 +3,9 @@ import util from "node:util"
 import { apigen } from "../src/main"
 
 const sources: { name: string; url: string }[] = [
-  { name: "petstore-v2", url: "https://petstore.swagger.io/v2/swagger.json" },
-  { name: "petstore-v3", url: "https://petstore3.swagger.io/api/v3/openapi.json" },
+  { name: "petstore2", url: "https://petstore.swagger.io/v2/swagger.json" },
+  { name: "petstore3", url: "https://petstore3.swagger.io/api/v3/openapi.json" },
+  { name: "petstore31", url: "https://petstore31.swagger.io/api/v31/openapi.json" },
 ]
 
 const main = async () => {

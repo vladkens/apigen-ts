@@ -122,7 +122,7 @@ export class ApiClient {
         status?: string
       },
     ) => {
-      return this.Fetch<void>("post", `/pet/${petId}`, { search })
+      return this.Fetch<Pet>("post", `/pet/${petId}`, { search })
     },
 
     deletePet: (petId: number) => {
@@ -159,7 +159,7 @@ export class ApiClient {
 
   user = {
     createUser: (body: User) => {
-      return this.Fetch<void>("post", "/user", { body })
+      return this.Fetch<User>("post", "/user", { body })
     },
 
     createUsersWithListInput: (body: User[]) => {
@@ -188,13 +188,6 @@ export class ApiClient {
   }
 }
 
-export type Address = {
-  street?: string
-  city?: string
-  state?: string
-  zip?: string
-}
-
 export type ApiResponse = {
   code?: number
   type?: string
@@ -204,12 +197,6 @@ export type ApiResponse = {
 export type Category = {
   id?: number
   name?: string
-}
-
-export type Customer = {
-  id?: number
-  username?: string
-  address?: Address[]
 }
 
 export type Order = {
