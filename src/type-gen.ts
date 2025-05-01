@@ -1,4 +1,4 @@
-import { Oas3Schema, Referenced } from "@redocly/openapi-core/lib/typings/openapi"
+import { Oas3Schema, Oas3_1Schema, Referenced } from "@redocly/openapi-core/lib/typings/openapi"
 import { filterEmpty } from "array-utils-ts"
 import { isArray, isBoolean, uniq, upperFirst } from "lodash-es"
 import ts from "typescript"
@@ -140,6 +140,8 @@ export const makeType = (ctx: Context, s?: Referenced<OAS3>): ts.TypeNode => {
     else if (s.type === "string") t = f.createKeywordTypeNode(ts.SyntaxKind.StringKeyword)
     else if (s.type === "null") t = f.createLiteralTypeNode(f.createNull())
     else if (isArray(s.type)) t = makeLiteralUnion(ctx, s.type)
+    else if (s.type === "array" && isPrefixItems(s) && s.prefixItems && !s.items)
+      t = f.createTupleTypeNode(s.prefixItems.map(mk))
     else if (s.type === "array" && !isBoolean(s.items)) t = f.createArrayTypeNode(mk(s.items))
     else {
       console.warn(`makeType: unknown type "${s.type}"`)
@@ -168,6 +170,10 @@ const isStringEnum = (s: Referenced<Oas3Schema>): s is Oas3Schema & { enum: stri
     return s.enum.every((x) => typeof x === "string")
   }
   return false
+}
+
+const isPrefixItems = (s: OAS3): s is Oas3_1Schema => {
+  return (s as Oas3_1Schema).prefixItems !== undefined
 }
 
 export const makeTypeAlias = (ctx: Context, name: string, s: Referenced<Oas3Schema>) => {
