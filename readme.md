@@ -41,16 +41,16 @@ yarn add -D apigen-ts
 
 ```sh
 # From file
-yarn apigen-ts ./openapi.json ./api-client.ts
+npx apigen-ts ./openapi.json ./api-client.ts
 
 # From url
-yarn apigen-ts https://petstore3.swagger.io/api/v3/openapi.json ./api-client.ts
+npx apigen-ts https://petstore3.swagger.io/api/v3/openapi.json ./api-client.ts
 
 # From protected url
-yarn apigen-ts https://secret-api.example.com ./api-client.ts -H "x-api-key: secret-key"
+npx apigen-ts https://secret-api.example.com ./api-client.ts -H "x-api-key: secret-key"
 ```
 
-Run `yarn apigen-ts --help` for more options. Examples of generated clients [here](./examples/).
+Run `npx apigen-ts --help` for more options. Examples of generated clients [here](./examples/).
 
 ### 2. Import
 
@@ -90,7 +90,7 @@ await api.protectedRoute.get() // here authenticated
 ### Automatic date parsing
 
 ```sh
-yarn apigen-ts ./openapi.json ./api-client.ts --parse-dates
+npx apigen-ts ./openapi.json ./api-client.ts --parse-dates
 ```
 
 ```ts
@@ -103,7 +103,7 @@ const createdAt: Date = pet.createdAt // date parsed from string with format=dat
 You can generate string literal union instead of native enums in case you want to run in Node.js environment with [type-stripping](https://nodejs.org/api/typescript.html#type-stripping). To achive this pass `--inline-enums` command line argument or use `inlineEnums: true` in Node.js API.
 
 ```sh
-yarn apigen-ts ./openapi.json ./api-client.ts --inline-enums
+npx apigen-ts ./openapi.json ./api-client.ts --inline-enums
 ```
 
 This will generate:
