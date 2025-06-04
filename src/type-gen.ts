@@ -137,6 +137,7 @@ export const makeType = (ctx: Context, s?: Referenced<OAS3>): ts.TypeNode => {
     if (s.type === "object") t = makeObject(ctx, s)
     else if (s.type === "boolean") t = f.createKeywordTypeNode(ts.SyntaxKind.BooleanKeyword)
     else if (s.type === "number") t = f.createKeywordTypeNode(ts.SyntaxKind.NumberKeyword)
+    else if (isConstantString(s)) t = f.createLiteralTypeNode(f.createStringLiteral(s.const))
     else if (s.type === "string") t = f.createKeywordTypeNode(ts.SyntaxKind.StringKeyword)
     else if (s.type === "null") t = f.createLiteralTypeNode(f.createNull())
     else if (isArray(s.type)) t = makeLiteralUnion(ctx, s.type)
@@ -174,6 +175,10 @@ const isStringEnum = (s: Referenced<Oas3Schema>): s is Oas3Schema & { enum: stri
 
 const isPrefixItems = (s: OAS3): s is Oas3_1Schema => {
   return (s as Oas3_1Schema).prefixItems !== undefined
+}
+
+const isConstantString = (s: OAS3): s is Oas3_1Schema & { const: string } => {
+  return s.type === "string" && (s as Oas3_1Schema).const !== undefined
 }
 
 export const makeTypeAlias = (ctx: Context, name: string, s: Referenced<Oas3Schema>) => {
