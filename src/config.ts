@@ -10,6 +10,7 @@ export type Config = {
   source: string
   output: string | null
   name: string
+  namespacing: boolean
   parseDates: boolean
   inlineEnums: boolean
   resolveName?: (ctx: Context, op: OpConfig, proposal: OpName) => OpName | undefined
@@ -24,6 +25,7 @@ export const initCtx = (config?: Partial<Context>): Context => {
     output: "",
     name: "ApiClient",
     doc: { openapi: "3.1.0" },
+    namespacing: true,
     parseDates: false,
     inlineEnums: false,
     headers: {},
@@ -54,6 +56,11 @@ export const getCliConfig = () => {
         description: "API class name to export",
         default: "ApiClient",
       },
+      noNamespacing: {
+        type: Boolean,
+        description: "disable namespacing of generated methods based on the first tag",
+        default: false,
+      },
       parseDates: {
         type: Boolean,
         description: "Parse dates as Date objects",
@@ -78,6 +85,7 @@ export const getCliConfig = () => {
     source: argv._.source,
     output: argv._.output ?? null,
     name: argv.flags.name,
+    namespacing: !argv.flags.noNamespacing,
     parseDates: argv.flags.parseDates,
     inlineEnums: argv.flags.inlineEnums,
     headers: parseHeaders(argv.flags.header),
