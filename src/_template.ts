@@ -97,7 +97,7 @@ export class ApiClient {
     }
   }
 
-  // apigen:modules
+  // apigen:clientMembers
 }
 
 // apigen:types

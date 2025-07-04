@@ -8,7 +8,7 @@ import { formatCode, printCode } from "./printer"
 export const apigen = async (config: Partial<Config> & Pick<Config, "source" | "output">) => {
   const doc = await loadSchema({ url: config.source, headers: config.headers })
   const ctx = initCtx({ ...config, doc })
-  const { modules, types } = await generateAst(ctx)
+  const { clientMembers, types } = await generateAst(ctx)
 
   const filepath = join(dirname(fileURLToPath(import.meta.url)), "_template.ts")
   const file = await fs.readFile(filepath, "utf-8")
@@ -26,7 +26,7 @@ export const apigen = async (config: Partial<Config> & Pick<Config, "source" | "
     code = code.replace(/this.PopulateDates\((.+)\)/, "$1")
   }
 
-  code = code.replace("// apigen:modules", printCode(modules))
+  code = code.replace("// apigen:clientMembers", printCode(clientMembers))
   code = code.replace("// apigen:types", printCode(types))
   code = code.replace("class ApiClient", `class ${ctx.name}`)
 

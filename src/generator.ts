@@ -223,12 +223,12 @@ const prepareTypes = async (ctx: Context) => {
 export const generateAst = async (ctx: Context) => {
   const types = await prepareTypes(ctx)
   const routes = await prepareRoutes(ctx)
-  const modules: ts.PropertyDeclaration[] = []
+  const clientMembers: ts.PropertyDeclaration[] = []
   for (const [k, v] of Object.entries(routes)) {
-    modules.push(prepareNs(ctx, k, v))
+    clientMembers.push(prepareNs(ctx, k, v))
   }
 
-  return { modules, types }
+  return { clientMembers, types }
 }
 
 export const loadSchema = async ({
