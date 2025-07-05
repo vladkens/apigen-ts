@@ -122,13 +122,19 @@ export const makeType = (ctx: Context, s?: Referenced<OAS3>): ts.TypeNode => {
   }
 
   if ("properties" in s && s.properties) {
-    return f.createTypeLiteralNode(
+    let t = f.createTypeLiteralNode(
       Object.entries(s.properties).map(([k, v]) => {
         const r = s.required ?? []
         const q = r.includes(k) ? undefined : f.createToken(ts.SyntaxKind.QuestionToken)
         return f.createPropertySignature(undefined, f.createStringLiteral(k), q, mk(v))
       }),
     )
+
+    // openapi 3.0 has nullable as boolean property
+    if ("nullable" in s && s.nullable) {
+      return f.createUnionTypeNode([t, f.createLiteralTypeNode(f.createNull())])
+    }
+    return t
   }
 
   if ("type" in s) {
