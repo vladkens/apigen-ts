@@ -1,7 +1,7 @@
-import { Oas3Definition } from "@redocly/openapi-core"
-import { Oas3Operation } from "@redocly/openapi-core/lib/typings/openapi"
+import { Oas3Operation, Oas3Schema, Referenced } from "@redocly/openapi-core/lib/typings/openapi"
 import { cli } from "cleye"
 import { name, version } from "../package.json"
+import { PathItem } from "./schema"
 
 export type OpConfig = Oas3Operation & { method: string; path: string }
 export type OpName = [string, string]
@@ -16,14 +16,20 @@ export type Config = {
   headers: Record<string, string>
 }
 
-export type Context = Config & { doc: Oas3Definition; logTag: string; usedNames: Set<string> }
+export type Context = Config & {
+  paths: Record<string, PathItem>
+  schemas: Record<string, Referenced<Oas3Schema>>
+  logTag: string
+  usedNames: Set<string>
+}
 
 export const initCtx = (config?: Partial<Context>): Context => {
   return {
     source: "",
     output: "",
     name: "ApiClient",
-    doc: { openapi: "3.1.0" },
+    paths: {},
+    schemas: {},
     parseDates: false,
     inlineEnums: false,
     headers: {},

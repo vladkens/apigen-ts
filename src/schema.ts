@@ -1,15 +1,56 @@
 import {
   Oas3_1Schema,
+  Oas3Definition,
   Oas3Operation,
   Oas3Parameter,
   Oas3RequestBody,
   Oas3Schema,
   Referenced,
 } from "@redocly/openapi-core/lib/typings/openapi"
-import { get } from "lodash-es"
+import { get, isObject } from "lodash-es"
 import { Context } from "./config"
 
 export type OAS3 = Oas3Schema | Oas3_1Schema
+
+const HttpMethods = ["get", "post", "put", "patch", "delete", "head", "options", "trace"] as const
+
+// Oas3PathItem defines each method operation as a property.
+// We want to be able to iterate over methods so we introduce this type.
+export interface PathItem {
+  ops: Record<string, Oas3Operation>
+  summary?: string
+  description?: string
+  parameters?: Array<Referenced<Oas3Parameter>>
+}
+
+export function filterSchema(doc: Oas3Definition) {
+  const paths: Record<string, PathItem> = {}
+  for (const [path, pathConfig] of Object.entries(doc.paths ?? {})) {
+    const logTag = `${"[ALL]".toUpperCase().padEnd(6, " ")} ${path}`
+    if (!isObject(pathConfig)) continue
+
+    if ("$ref" in pathConfig) {
+      console.warn(`${logTag} $ref should be resolved before (skipping)`)
+      continue
+    }
+
+    paths[path] = {
+      ops: {},
+      summary: pathConfig.summary,
+      description: pathConfig.description,
+      parameters: pathConfig.parameters,
+    }
+
+    for (const method of HttpMethods) {
+      const op = pathConfig[method]
+      if (!op) continue
+
+      paths[path].ops[method] = op
+    }
+  }
+  const schemas = doc.components?.schemas ?? {}
+  return { paths, schemas }
+}
 
 // todo: wrong <T> typing
 export const unref = <T extends Oas3RequestBody | Oas3Parameter | OAS3>(
@@ -23,7 +64,7 @@ export const unref = <T extends Oas3RequestBody | Oas3Parameter | OAS3>(
     const obj = parts.reduce(
       // openapi encodes "/" in key as "~1"
       (acc, x) => get(acc, x, get(acc, decodeURIComponent(x).replaceAll("~1", "/"))),
-      ctx.doc,
+      { components: { schemas: ctx.schemas } },
     )
 
     if (obj) return obj as unknown as T

@@ -1,6 +1,6 @@
 import redocly, { BaseResolver, Oas3Definition } from "@redocly/openapi-core"
 import { filterEmpty, filterNullable } from "array-utils-ts"
-import { isObject, lowerFirst, sortBy, uniqBy, upperFirst } from "lodash-es"
+import { lowerFirst, sortBy, uniqBy, upperFirst } from "lodash-es"
 import { convertObj } from "swagger2openapi"
 import ts from "typescript"
 import { Context, OpConfig, OpName } from "./config"
@@ -8,7 +8,6 @@ import { getRepSchema, getReqSchema, unref } from "./schema"
 import { makeType, makeTypeAlias, normalizeIdentifier } from "./type-gen"
 
 const f = ts.factory
-const HttpMethods = ["get", "post", "put", "patch", "delete", "head", "options", "trace"] as const
 
 const normalizeOpName = (val: string) => {
   const articles = new Set(["a", "an", "the"])
@@ -164,20 +163,9 @@ const prepareNs = (ctx: Context, name: string, handlers: ts.PropertyAssignment[]
 const prepareRoutes = async (ctx: Context) => {
   const routes: Record<string, ts.PropertyAssignment[]> = {}
 
-  for (const [path, pathConfig] of Object.entries(ctx.doc.paths ?? {})) {
-    ctx.logTag = `${"[ALL]".toUpperCase().padEnd(6, " ")} ${path}`
-    if (!isObject(pathConfig)) continue
-
-    if ("$ref" in pathConfig) {
-      console.warn(`${ctx.logTag} $ref should be resolved before (skipping)`)
-      continue
-    }
-
-    for (const method of HttpMethods) {
+  for (const [path, pathConfig] of Object.entries(ctx.paths)) {
+    for (const [method, config] of Object.entries(pathConfig.ops)) {
       ctx.logTag = `${method.toUpperCase().padEnd(6, " ")} ${path}`
-
-      const config = pathConfig[method]
-      if (!config) continue
 
       if (pathConfig.parameters) {
         config.parameters = [...(config.parameters ?? []), ...pathConfig.parameters]
@@ -208,7 +196,7 @@ const prepareRoutes = async (ctx: Context) => {
 
 const prepareTypes = async (ctx: Context) => {
   const types: ts.DeclarationStatement[] = []
-  const typesConfig = sortBy(Object.entries(ctx.doc.components?.schemas ?? {}), ([k]) => k)
+  const typesConfig = sortBy(Object.entries(ctx.schemas), ([k]) => k)
   for (const [name, config] of typesConfig) {
     try {
       types.push(makeTypeAlias(ctx, name, config))
