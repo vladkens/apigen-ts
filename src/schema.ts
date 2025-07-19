@@ -8,7 +8,7 @@ import {
   Referenced,
 } from "@redocly/openapi-core/lib/typings/openapi"
 import { get, isObject } from "lodash-es"
-import { Context } from "./config"
+import { Config, Context } from "./config"
 
 export type OAS3 = Oas3Schema | Oas3_1Schema
 
@@ -23,8 +23,9 @@ export interface PathItem {
   parameters?: Array<Referenced<Oas3Parameter>>
 }
 
-export function filterSchema(doc: Oas3Definition) {
+export function filterSchema(doc: Oas3Definition, config: Partial<Config>) {
   const paths: Record<string, PathItem> = {}
+  let usedSchemaRefs = new Set<string>()
   for (const [path, pathConfig] of Object.entries(doc.paths ?? {})) {
     const logTag = `${"[ALL]".toUpperCase().padEnd(6, " ")} ${path}`
     if (!isObject(pathConfig)) continue
@@ -45,10 +46,29 @@ export function filterSchema(doc: Oas3Definition) {
       const op = pathConfig[method]
       if (!op) continue
 
+      if (config.includeTags && !op.tags?.some((tag) => config.includeTags!.includes(tag))) {
+        continue
+      }
+
       paths[path].ops[method] = op
+      extractSchemaReferences(op, usedSchemaRefs)
     }
   }
   const schemas = doc.components?.schemas ?? {}
+
+  // When we filter out operations we also want to filter out schemas that are no longer used.
+  let schemaRefsToCheck = usedSchemaRefs
+  while (schemaRefsToCheck.size > 0) {
+    const newSchemaRefs = new Set<string>()
+    for (const ref of schemaRefsToCheck) {
+      extractSchemaReferences(schemas[ref], newSchemaRefs)
+    }
+    schemaRefsToCheck = newSchemaRefs.difference(usedSchemaRefs)
+    usedSchemaRefs = usedSchemaRefs.union(newSchemaRefs)
+  }
+  for (const unusedSchema of new Set(Object.keys(schemas)).difference(usedSchemaRefs)) {
+    delete schemas[unusedSchema]
+  }
   return { paths, schemas }
 }
 
@@ -126,4 +146,24 @@ export const getRepSchema = (ctx: Context, config: Oas3Operation): OAS3 | undefi
   // console.warn(`${ctx.tag} no known response for code ${successCodes[0]}: ${types}`)
 
   return undefined
+}
+
+function extractSchemaReferences(obj: any, schemaRefs: Set<string>): void {
+  if (obj === null || obj === undefined) {
+    return
+  }
+
+  if (typeof obj === "object" && !Array.isArray(obj) && obj.$ref) {
+    const ref = obj.$ref
+    if (typeof ref === "string" && ref.startsWith("#/components/schemas/")) {
+      const schemaName = ref.replace("#/components/schemas/", "")
+      schemaRefs.add(schemaName)
+    }
+  }
+
+  if (Array.isArray(obj)) {
+    obj.forEach((item) => extractSchemaReferences(item, schemaRefs))
+  } else if (typeof obj === "object") {
+    Object.values(obj).forEach((prop) => extractSchemaReferences(prop, schemaRefs))
+  }
 }

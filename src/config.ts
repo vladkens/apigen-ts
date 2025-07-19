@@ -10,6 +10,7 @@ export type Config = {
   source: string
   output: string | null
   name: string
+  includeTags: string[] | null
   parseDates: boolean
   inlineEnums: boolean
   resolveName?: (ctx: Context, op: OpConfig, proposal: OpName) => OpName | undefined
@@ -30,6 +31,7 @@ export const initCtx = (config?: Partial<Context>): Context => {
     name: "ApiClient",
     paths: {},
     schemas: {},
+    includeTags: null,
     parseDates: false,
     inlineEnums: false,
     headers: {},
@@ -60,6 +62,11 @@ export const getCliConfig = () => {
         description: "API class name to export",
         default: "ApiClient",
       },
+      includeTag: {
+        type: [String],
+        description: "Only include operations with the given tags.",
+        default: null,
+      },
       parseDates: {
         type: Boolean,
         description: "Parse dates as Date objects",
@@ -84,6 +91,7 @@ export const getCliConfig = () => {
     source: argv._.source,
     output: argv._.output ?? null,
     name: argv.flags.name,
+    includeTags: argv.flags.includeTag,
     parseDates: argv.flags.parseDates,
     inlineEnums: argv.flags.inlineEnums,
     headers: parseHeaders(argv.flags.header),
