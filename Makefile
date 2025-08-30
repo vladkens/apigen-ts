@@ -22,6 +22,7 @@ test-matrix-ts:
 	@make test-ts v=5.6.3
 	@make test-ts v=5.7.3
 	@make test-ts v=5.8.3
+	@make test-ts v=5.9.2
 	@make test-ts v=next
 
 clean:
