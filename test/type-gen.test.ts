@@ -93,6 +93,10 @@ test("type inline", async () => {
   // object
   t({ type: "object", properties: { a: { type: "string" } } }, "{ a?: string }")
   t({ type: "object", properties: { a: { type: "string" } }, required: ["a"] }, "{ a: string }")
+  t(
+    { type: "object", properties: { a: { type: "string" } }, required: ["a"], nullable: true },
+    "{ a: string } | null",
+  )
 
   t(
     {
