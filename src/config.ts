@@ -1,7 +1,7 @@
-import { Oas3Operation, Oas3Schema, Referenced } from "@redocly/openapi-core/lib/typings/openapi"
+import { Oas3Definition } from "@redocly/openapi-core"
+import { Oas3Operation } from "@redocly/openapi-core/lib/typings/openapi"
 import { cli } from "cleye"
 import { name, version } from "../package.json"
-import { PathItem } from "./schema"
 
 export type OpConfig = Oas3Operation & { method: string; path: string }
 export type OpName = [string, string]
@@ -10,28 +10,20 @@ export type Config = {
   source: string
   output: string | null
   name: string
-  includeTags: string[] | null
   parseDates: boolean
   inlineEnums: boolean
   resolveName?: (ctx: Context, op: OpConfig, proposal: OpName) => OpName | undefined
   headers: Record<string, string>
 }
 
-export type Context = Config & {
-  paths: Record<string, PathItem>
-  schemas: Record<string, Referenced<Oas3Schema>>
-  logTag: string
-  usedNames: Set<string>
-}
+export type Context = Config & { doc: Oas3Definition; logTag: string; usedNames: Set<string> }
 
 export const initCtx = (config?: Partial<Context>): Context => {
   return {
     source: "",
     output: "",
     name: "ApiClient",
-    paths: {},
-    schemas: {},
-    includeTags: null,
+    doc: { openapi: "3.1.0" },
     parseDates: false,
     inlineEnums: false,
     headers: {},
@@ -62,11 +54,6 @@ export const getCliConfig = () => {
         description: "API class name to export",
         default: "ApiClient",
       },
-      includeTag: {
-        type: [String],
-        description: "Only include operations with the given tags.",
-        default: null,
-      },
       parseDates: {
         type: Boolean,
         description: "Parse dates as Date objects",
@@ -91,7 +78,6 @@ export const getCliConfig = () => {
     source: argv._.source,
     output: argv._.output ?? null,
     name: argv.flags.name,
-    includeTags: argv.flags.includeTag,
     parseDates: argv.flags.parseDates,
     inlineEnums: argv.flags.inlineEnums,
     headers: parseHeaders(argv.flags.header),

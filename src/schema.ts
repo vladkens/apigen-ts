@@ -1,76 +1,15 @@
 import {
   Oas3_1Schema,
-  Oas3Definition,
   Oas3Operation,
   Oas3Parameter,
   Oas3RequestBody,
   Oas3Schema,
   Referenced,
 } from "@redocly/openapi-core/lib/typings/openapi"
-import { get, isObject } from "lodash-es"
-import { Config, Context } from "./config"
+import { get } from "lodash-es"
+import { Context } from "./config"
 
 export type OAS3 = Oas3Schema | Oas3_1Schema
-
-const HttpMethods = ["get", "post", "put", "patch", "delete", "head", "options", "trace"] as const
-
-// Oas3PathItem defines each method operation as a property.
-// We want to be able to iterate over methods so we introduce this type.
-export interface PathItem {
-  ops: Record<string, Oas3Operation>
-  summary?: string
-  description?: string
-  parameters?: Array<Referenced<Oas3Parameter>>
-}
-
-export function filterSchema(doc: Oas3Definition, config: Partial<Config>) {
-  const paths: Record<string, PathItem> = {}
-  let usedSchemaRefs = new Set<string>()
-  for (const [path, pathConfig] of Object.entries(doc.paths ?? {})) {
-    const logTag = `${"[ALL]".toUpperCase().padEnd(6, " ")} ${path}`
-    if (!isObject(pathConfig)) continue
-
-    if ("$ref" in pathConfig) {
-      console.warn(`${logTag} $ref should be resolved before (skipping)`)
-      continue
-    }
-
-    paths[path] = {
-      ops: {},
-      summary: pathConfig.summary,
-      description: pathConfig.description,
-      parameters: pathConfig.parameters,
-    }
-
-    for (const method of HttpMethods) {
-      const op = pathConfig[method]
-      if (!op) continue
-
-      if (config.includeTags && !op.tags?.some((tag) => config.includeTags!.includes(tag))) {
-        continue
-      }
-
-      paths[path].ops[method] = op
-      extractSchemaReferences(op, usedSchemaRefs)
-    }
-  }
-  const schemas = doc.components?.schemas ?? {}
-
-  // When we filter out operations we also want to filter out schemas that are no longer used.
-  let schemaRefsToCheck = usedSchemaRefs
-  while (schemaRefsToCheck.size > 0) {
-    const newSchemaRefs = new Set<string>()
-    for (const ref of schemaRefsToCheck) {
-      extractSchemaReferences(schemas[ref], newSchemaRefs)
-    }
-    schemaRefsToCheck = newSchemaRefs.difference(usedSchemaRefs)
-    usedSchemaRefs = usedSchemaRefs.union(newSchemaRefs)
-  }
-  for (const unusedSchema of new Set(Object.keys(schemas)).difference(usedSchemaRefs)) {
-    delete schemas[unusedSchema]
-  }
-  return { paths, schemas }
-}
 
 // todo: wrong <T> typing
 export const unref = <T extends Oas3RequestBody | Oas3Parameter | OAS3>(
@@ -84,7 +23,7 @@ export const unref = <T extends Oas3RequestBody | Oas3Parameter | OAS3>(
     const obj = parts.reduce(
       // openapi encodes "/" in key as "~1"
       (acc, x) => get(acc, x, get(acc, decodeURIComponent(x).replaceAll("~1", "/"))),
-      { components: { schemas: ctx.schemas } },
+      ctx.doc,
     )
 
     if (obj) return obj as unknown as T
@@ -146,24 +85,4 @@ export const getRepSchema = (ctx: Context, config: Oas3Operation): OAS3 | undefi
   // console.warn(`${ctx.tag} no known response for code ${successCodes[0]}: ${types}`)
 
   return undefined
-}
-
-function extractSchemaReferences(obj: any, schemaRefs: Set<string>): void {
-  if (obj === null || obj === undefined) {
-    return
-  }
-
-  if (typeof obj === "object" && !Array.isArray(obj) && obj.$ref) {
-    const ref = obj.$ref
-    if (typeof ref === "string" && ref.startsWith("#/components/schemas/")) {
-      const schemaName = ref.replace("#/components/schemas/", "")
-      schemaRefs.add(schemaName)
-    }
-  }
-
-  if (Array.isArray(obj)) {
-    obj.forEach((item) => extractSchemaReferences(item, schemaRefs))
-  } else if (typeof obj === "object") {
-    Object.values(obj).forEach((prop) => extractSchemaReferences(prop, schemaRefs))
-  }
 }

@@ -5,12 +5,10 @@ import { fileURLToPath } from "url"
 import { Config, initCtx } from "./config"
 import { generateAst, loadSchema } from "./generator"
 import { formatCode, printCode } from "./printer"
-import { filterSchema } from "./schema"
 
 export const apigen = async (config: Partial<Config> & Pick<Config, "source" | "output">) => {
   const doc = await loadSchema({ url: config.source, headers: config.headers })
-  const { paths, schemas } = filterSchema(doc, config)
-  const ctx = initCtx({ ...config, paths, schemas })
+  const ctx = initCtx({ ...config, doc })
   const { modules, types } = await generateAst(ctx)
 
   const filepath = join(dirname(fileURLToPath(import.meta.url)), "_template.ts")
