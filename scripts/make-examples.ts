@@ -6,6 +6,7 @@ const sources: { name: string; url: string }[] = [
   { name: "petstore2", url: "https://petstore.swagger.io/v2/swagger.json" },
   { name: "petstore3", url: "https://petstore3.swagger.io/api/v3/openapi.json" },
   { name: "petstore31", url: "https://petstore31.swagger.io/api/v31/openapi.json" },
+  { name: "features", url: "file://examples/features.yaml" },
 ]
 
 const main = async () => {

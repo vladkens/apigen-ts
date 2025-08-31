@@ -1,4 +1,3 @@
-import { Oas3Schema } from "@redocly/openapi-core"
 import ts from "typescript"
 import { test } from "uvu"
 import { equal } from "uvu/assert"
@@ -141,10 +140,35 @@ test("type inline", async () => {
     },
     "Record<string, (string | number)[]>",
   )
+
+  t(
+    {
+      type: "object",
+      properties: { version: { type: "string", const: "v1" } },
+      required: ["version"],
+    },
+    '{ version: "v1" }',
+  )
+
+  t(
+    {
+      type: "object",
+      properties: {
+        version: {
+          oneOf: [
+            { type: "string", const: "v1" },
+            { type: "string", const: "v2" },
+          ],
+        },
+      },
+      required: ["version"],
+    },
+    '{ version: "v1" | "v2" }',
+  )
 })
 
 test("type alias", async () => {
-  const t = (l: Oas3Schema & { name?: string }, r: string, cfg?: Cfg) => {
+  const t = (l: OAS3 & { name?: string }, r: string, cfg?: Cfg) => {
     const ctx = initCtx({ ...cfg })
     const res = makeTypeAlias(ctx, l.name ?? "t", l)
     const txt = printCode([res as unknown as ts.Statement])

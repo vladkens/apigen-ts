@@ -166,7 +166,7 @@ export const makeType = (ctx: Context, s?: Referenced<OAS3>): ts.TypeNode => {
   return f.createKeywordTypeNode(ts.SyntaxKind.UnknownKeyword)
 }
 
-const isStringEnum = (s: Referenced<Oas3Schema>): s is Oas3Schema & { enum: string[] } => {
+const isStringEnum = (s: Referenced<OAS3>): s is Oas3Schema & { enum: string[] } => {
   if ("enum" in s && s.enum) {
     return s.enum.every((x) => typeof x === "string")
   }
@@ -181,7 +181,7 @@ const isConstantString = (s: OAS3): s is Oas3_1Schema & { const: string } => {
   return s.type === "string" && (s as Oas3_1Schema).const !== undefined
 }
 
-export const makeTypeAlias = (ctx: Context, name: string, s: Referenced<Oas3Schema>) => {
+export const makeTypeAlias = (ctx: Context, name: string, s: Referenced<OAS3>) => {
   if (isStringEnum(s) && !ctx.inlineEnums) {
     const tokens1 = uniq(s.enum)
     const tokens2 = filterEmpty(tokens1)

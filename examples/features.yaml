@@ -1,0 +1,72 @@
+# https://swagger.io/specification/
+openapi: 3.1.0
+info:
+  title: Constant String Example (Full with Unions)
+  version: 1.0.0
+paths:
+  /status:
+    get:
+      summary: Get a fixed status (enum-style constant)
+      responses:
+        "200":
+          description: Always returns status = "active"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: ["active"] # constant string via enum
+
+  /version:
+    get:
+      summary: Get API version (const-style constant)
+      responses:
+        "200":
+          description: Always returns version = "v1"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  version:
+                    type: string
+                    const: "v1" # constant string via const
+
+  /events:
+    get:
+      summary: Get an event (discriminated union with const)
+      responses:
+        "200":
+          description: Returns an event object
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/UserCreated"
+                  - $ref: "#/components/schemas/UserDeleted"
+                discriminator:
+                  propertyName: type
+
+components:
+  schemas:
+    UserCreated:
+      type: object
+      properties:
+        type:
+          type: string
+          const: "user_created" # discriminator value
+        userId:
+          type: string
+      required: [type, userId]
+
+    UserDeleted:
+      type: object
+      properties:
+        type:
+          type: string
+          const: "user_deleted" # discriminator value
+        userId:
+          type: string
+      required: [type, userId]
