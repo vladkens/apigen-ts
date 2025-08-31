@@ -3,19 +3,19 @@ import { test } from "uvu"
 import { equal } from "uvu/assert"
 import { ApiClient } from "../src/_template"
 
-const t = async <T>(body: T) => {
-  try {
-    const baseUrl = "http://localhost"
-    const client = new ApiClient({ baseUrl })
-    fetchMock.mockGlobal()
-    fetchMock.route(`${baseUrl}`, { body: JSON.stringify(body) })
-    return client.Fetch<T>("get", "/")
-  } finally {
-    fetchMock.unmockGlobal()
-  }
-}
-
 test("apiClient dates parsing", async () => {
+  const t = async <T>(body: T) => {
+    try {
+      const baseUrl = "http://localhost"
+      const client = new ApiClient({ baseUrl })
+      fetchMock.mockGlobal()
+      fetchMock.route(`${baseUrl}`, { body: JSON.stringify(body) })
+      return client.Fetch<T>("get", "/")
+    } finally {
+      fetchMock.unmockGlobal()
+    }
+  }
+
   const date = new Date("2021-01-01T00:00:00Z")
   const dateStr = date.toISOString()
 
@@ -27,13 +27,17 @@ test("apiClient dates parsing", async () => {
 })
 
 test("apiClient base url", async () => {
+  const t = (c: ApiClient, path: string, expect: string) => {
+    equal(c.PrepareFetchUrl(path).toString(), expect)
+  }
+
   const c1 = new ApiClient({ baseUrl: "http://localhost" })
-  equal(c1.PrepareFetchUrl("/").toString(), "http://localhost/")
-  equal(c1.PrepareFetchUrl("/api/v1/cats").toString(), "http://localhost/api/v1/cats")
+  t(c1, "/", "http://localhost/")
+  t(c1, "/api/v1/cats", "http://localhost/api/v1/cats")
 
   const c2 = new ApiClient({ baseUrl: "https://example.com" })
-  equal(c2.PrepareFetchUrl("/").toString(), "https://example.com/")
-  equal(c2.PrepareFetchUrl("/api/v1/cats").toString(), "https://example.com/api/v1/cats")
+  t(c2, "/", "https://example.com/")
+  t(c2, "/api/v1/cats", "https://example.com/api/v1/cats")
 
   class MyClient extends ApiClient {
     PrepareFetchUrl(path: string) {
@@ -42,8 +46,14 @@ test("apiClient base url", async () => {
   }
 
   const c3 = new MyClient({ baseUrl: "https://example.com/api/v1" })
-  equal(c3.PrepareFetchUrl("/").toString(), "https://example.com/api/v1/")
-  equal(c3.PrepareFetchUrl("/cats").toString(), "https://example.com/api/v1/cats")
+  t(c3, "/", "https://example.com/api/v1/")
+  t(c3, "/cats", "https://example.com/api/v1/cats")
+
+  const c4 = new ApiClient({ baseUrl: "https://a.com/b/" })
+  t(c4, "c/d", "https://a.com/b/c/d")
+  t(c4, "/c/d", "https://a.com/c/d")
+  t(c4, "../c/d", "https://a.com/c/d")
+  t(c4, "../../c/d", "https://a.com/c/d")
 })
 
 test.run()

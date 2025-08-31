@@ -1,5 +1,5 @@
 FROM node:alpine
-ARG TS_VER=5.7.3
+ARG TS_VER=latest
 
 WORKDIR /app
 COPY package.json yarn.lock ./

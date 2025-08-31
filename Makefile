@@ -2,6 +2,10 @@
 
 default:
 	yarn ci
+	node --loader tsm scripts/make-examples.ts
+
+fmt:
+	yarn format
 
 test:
 	yarn test
