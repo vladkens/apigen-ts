@@ -1,6 +1,5 @@
 import fs from "fs/promises"
 import { dirname, join } from "path"
-import ts from "typescript"
 import { fileURLToPath } from "url"
 import { Config, initCtx } from "./config"
 import { generateAst, loadSchema } from "./generator"
@@ -9,7 +8,7 @@ import { formatCode, printCode } from "./printer"
 export const apigen = async (config: Partial<Config> & Pick<Config, "source" | "output">) => {
   const doc = await loadSchema({ url: config.source, headers: config.headers })
   const ctx = initCtx({ ...config, doc })
-  const { modules, types } = await generateAst(ctx)
+  const { clientMembers, types } = await generateAst(ctx)
 
   const filepath = join(dirname(fileURLToPath(import.meta.url)), "_template.ts")
   const file = await fs.readFile(filepath, "utf-8")
@@ -27,8 +26,7 @@ export const apigen = async (config: Partial<Config> & Pick<Config, "source" | "
     code = code.replace(/this.PopulateDates\((.+)\)/, "$1")
   }
 
-  // broken type by design, need to keep original formatting (ts still can print it)
-  code = code.replace("// apigen:modules", printCode(modules as unknown as ts.Statement[]))
+  code = code.replace("// apigen:clientMembers", printCode(clientMembers))
   code = code.replace("// apigen:types", printCode(types))
   code = code.replace("class ApiClient", `class ${ctx.name}`)
 

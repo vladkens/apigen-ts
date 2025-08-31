@@ -1,5 +1,4 @@
 import { trim } from "lodash-es"
-import ts from "typescript"
 import { test } from "uvu"
 import { equal } from "uvu/assert"
 import { prepareUrl } from "../src/generator"
@@ -7,7 +6,7 @@ import { printCode } from "../src/printer"
 
 test("url template", async () => {
   const t = async (url: string, replacements: Record<string, string>) => {
-    const code = printCode([prepareUrl(url, replacements) as unknown as ts.Statement])
+    const code = printCode([prepareUrl(url, replacements)])
     return trim(trim(code.trim(), ";"), '`"')
   }
 

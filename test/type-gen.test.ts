@@ -1,5 +1,4 @@
 import { Oas3Schema } from "@redocly/openapi-core"
-import ts from "typescript"
 import { test } from "uvu"
 import { equal } from "uvu/assert"
 import { initCtx } from "../src/config"
@@ -16,7 +15,7 @@ test("type inline", async () => {
   const t = (l: OAS3, r: string, cfg?: Cfg) => {
     const ctx = initCtx({ ...cfg })
     const res = makeType(ctx, l)
-    const txt = printCode([res as unknown as ts.Statement])
+    const txt = printCode([res])
       .replace(/"(\w+)"(\??):/g, "$1$2:")
       .replaceAll("\n", " ")
       .replace(/ +/g, " ")
@@ -147,7 +146,7 @@ test("type alias", async () => {
   const t = (l: Oas3Schema & { name?: string }, r: string, cfg?: Cfg) => {
     const ctx = initCtx({ ...cfg })
     const res = makeTypeAlias(ctx, l.name ?? "t", l)
-    const txt = printCode([res as unknown as ts.Statement])
+    const txt = printCode([res])
       .replace(";", "")
       .replace("export ", "")
       .replaceAll("\n", " ")

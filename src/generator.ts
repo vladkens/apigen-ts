@@ -25,7 +25,9 @@ const normalizeOpName = (val: string) => {
 }
 
 export const getOpName = (ctx: Context, op: OpConfig) => {
-  let ns = normalizeOpName(filterEmpty(op.tags ?? [])[0] ?? "general")
+  let ns
+  if (ctx.namespacing) ns = normalizeOpName(filterEmpty(op.tags ?? [])[0] ?? "general")
+  else ns = ""
   let fn = op.operationId ?? null
 
   // if not opId, try to make it from path
@@ -78,7 +80,7 @@ export const prepareUrl = (url: string, rename: Record<string, string>) => {
   )
 }
 
-const prepareOp = (ctx: Context, cfg: OpConfig, opName: string) => {
+const prepareOp = (ctx: Context, cfg: OpConfig, opName: string): [ts.Identifier, ts.Expression] => {
   cfg.parameters = cfg.parameters ?? []
 
   const reqSchema = getReqSchema(ctx, cfg)
@@ -126,7 +128,7 @@ const prepareOp = (ctx: Context, cfg: OpConfig, opName: string) => {
       : undefined,
   ])
 
-  return f.createPropertyAssignment(
+  return [
     f.createIdentifier(normalizeIdentifier(opName)),
     f.createArrowFunction(
       undefined,
@@ -148,21 +150,23 @@ const prepareOp = (ctx: Context, cfg: OpConfig, opName: string) => {
         ),
       ]),
     ),
-  )
+  ]
 }
 
-const prepareNs = (ctx: Context, name: string, handlers: ts.PropertyAssignment[]) => {
+const prepareNs = (ctx: Context, name: string, handlers: [ts.Identifier, ts.Expression][]) => {
   return f.createPropertyDeclaration(
     undefined,
     normalizeIdentifier(name),
     undefined,
     undefined,
-    f.createObjectLiteralExpression(handlers),
+    f.createObjectLiteralExpression(
+      handlers.map(([name, expr]) => f.createPropertyAssignment(name, expr)),
+    ),
   )
 }
 
 const prepareRoutes = async (ctx: Context) => {
-  const routes: Record<string, ts.PropertyAssignment[]> = {}
+  const routes: Record<string, [ts.Identifier, ts.Expression][]> = {}
 
   for (const [path, pathConfig] of Object.entries(ctx.doc.paths ?? {})) {
     ctx.logTag = `${"[ALL]".toUpperCase().padEnd(6, " ")} ${path}`
@@ -223,12 +227,18 @@ const prepareTypes = async (ctx: Context) => {
 export const generateAst = async (ctx: Context) => {
   const types = await prepareTypes(ctx)
   const routes = await prepareRoutes(ctx)
-  const modules: ts.PropertyDeclaration[] = []
-  for (const [k, v] of Object.entries(routes)) {
-    modules.push(prepareNs(ctx, k, v))
+  const clientMembers: ts.Node[] = []
+  if (ctx.namespacing) {
+    for (const [k, v] of Object.entries(routes)) {
+      clientMembers.push(prepareNs(ctx, k, v))
+    }
+  } else {
+    for (const [name, expr] of routes[""]) {
+      clientMembers.push(f.createPropertyDeclaration(undefined, name, undefined, undefined, expr))
+    }
   }
 
-  return { modules, types }
+  return { clientMembers, types }
 }
 
 export const loadSchema = async ({

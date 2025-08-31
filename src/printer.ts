@@ -1,27 +1,19 @@
 import path from "node:path"
 import ts from "typescript"
 
-const f = ts.factory
+export const printCode = (nodes: ts.Node[]) => {
+  const printer = ts.createPrinter()
+  const sourceFile = ts.createSourceFile(
+    "temp.ts",
+    "",
+    ts.ScriptTarget.Latest,
+    false,
+    ts.ScriptKind.TS,
+  )
 
-const addNewLines = <T extends ts.Node>(nodes: T[]) => {
-  const result: T[] = []
-  for (const node of nodes) {
-    result.push(node)
-    result.push(f.createIdentifier("\n") as unknown as T)
-  }
-  return result
-}
-
-export const printCode = (nodes: ts.Statement[]) => {
-  return ts
-    .createPrinter()
-    .printFile(
-      f.createSourceFile(
-        addNewLines(nodes),
-        f.createToken(ts.SyntaxKind.EndOfFileToken),
-        ts.NodeFlags.None,
-      ),
-    )
+  return nodes
+    .map((node) => printer.printNode(ts.EmitHint.Unspecified, node, sourceFile))
+    .join("\n\n")
     .replaceAll("}, ", "},\n\n")
 }
 
