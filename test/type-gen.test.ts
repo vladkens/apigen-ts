@@ -72,6 +72,7 @@ test("type inline", async () => {
   // t({ type: "string", enum: ["a", "b", ""] }, `"a" | "b" | ""`) // todo:
   t({ type: "number", enum: [1, 2] }, `1 | 2`)
   t({ type: "number", enum: [1, 2, 2] }, `1 | 2`)
+  t({ type: "number", enum: [-1, 0, 1] }, `-1 | 0 | 1`)
   t({ type: "boolean", enum: [true, false] }, `true | false`)
   t({ type: "boolean", enum: [true, true] }, `true`)
   t({ type: "boolean", enum: [false, false] }, `false`)

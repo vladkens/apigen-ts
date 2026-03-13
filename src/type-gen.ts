@@ -54,8 +54,16 @@ const makeInlineEnum = (s: OAS3) => {
   }
 
   if (s.type === "number") {
-    const tokens = uniq(values).map((x) => f.createNumericLiteral(x as number))
-    return f.createUnionTypeNode(tokens.map((x) => f.createLiteralTypeNode(x)))
+    const tokens = uniq(values).map((x) => {
+      const n = x as number
+      if (n < 0) {
+        return f.createLiteralTypeNode(
+          f.createPrefixUnaryExpression(ts.SyntaxKind.MinusToken, f.createNumericLiteral(-n)),
+        )
+      }
+      return f.createLiteralTypeNode(f.createNumericLiteral(n))
+    })
+    return f.createUnionTypeNode(tokens)
   }
 
   if (s.type === "boolean") {
