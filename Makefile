@@ -1,33 +1,32 @@
-.PHONY: test test-ts test-matrix-ts clean
+.PHONY: test test-ts test-matrix-ts clean update
 
-default:
-	yarn ci
-	node --loader tsm scripts/make-examples.ts
+default: fmt
+	npm run ci
+	npx tsx scripts/make-examples.ts
 
 fmt:
-	yarn format
+	npm run format
 
 test:
-	yarn test
+	npm test
 
-test-ts:
-	@echo "-- $(v) --------------------"
-	$(eval name=apigen_ts$(v))
-	@docker -l warning build -f Dockerfile.test --build-arg TS_VER=$(v) -t $(name) .
-	@docker run $(name)
+update:
+	npx --yes npm-check-updates -u
+	npm install
 
-test-matrix-ts:
-	@make test-ts v=5.0.4
-	@make test-ts v=5.1.6
-	@make test-ts v=5.2.2
-	@make test-ts v=5.3.3
-	@make test-ts v=5.4.5
-	@make test-ts v=5.5.4
-	@make test-ts v=5.6.3
-	@make test-ts v=5.7.3
-	@make test-ts v=5.8.3
-	@make test-ts v=5.9.2
-	@make test-ts v=next
+TS_VERSIONS := 5.0.4 5.1.6 5.2.2 5.3.3 5.4.5 5.5.4 5.6.3 5.7.3 5.8.3 5.9.2 next
+
+build-ts-%:
+	@echo "-- build $* --------------------"
+	@docker -l warning build -f Dockerfile.test --build-arg TS_VER=$* -t apigen_ts$* .
+
+run-ts-%:
+	@echo "-- run $* --------------------"
+	@docker run apigen_ts$*
+
+test-matrix:
+	@$(MAKE) -j$(words $(TS_VERSIONS)) $(addprefix build-ts-,$(TS_VERSIONS))
+	@$(MAKE) $(addprefix run-ts-,$(TS_VERSIONS))
 
 clean:
 	docker images --format "{{.Repository}}:{{.Tag}}" | grep "^apigen_ts" | xargs -r docker rmi --force

@@ -1,6 +1,7 @@
+.claude/**/*.local.json
 .DS_Store
-node_modules/
-scripts/specs/
-scripts/clients/
 coverage/
 dist/
+node_modules/
+scripts/clients/
+scripts/specs/

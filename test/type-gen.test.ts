@@ -1,6 +1,6 @@
+import { strictEqual as equal } from "node:assert"
+import { test } from "node:test"
 import ts from "typescript"
-import { test } from "uvu"
-import { equal } from "uvu/assert"
 import { initCtx } from "../src/config"
 import { printCode } from "../src/printer"
 import { OAS3 } from "../src/schema"
@@ -223,5 +223,3 @@ test("type alias", async () => {
   t({ type: "string", enum: ["Aaa", "bBB"] }, `type t = "Aaa" | "bBB"`, { inlineEnums: true })
   t({ type: "string", enum: ["_aA", "_bB"] }, `type t = "_aA" | "_bB"`, { inlineEnums: true })
 })
-
-test.run()

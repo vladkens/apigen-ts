@@ -1,6 +1,6 @@
 import fetchMock from "fetch-mock"
-import { test } from "uvu"
-import { equal } from "uvu/assert"
+import { strictEqual as equal } from "node:assert"
+import { test } from "node:test"
 import { ApiClient } from "../src/_template"
 
 test("apiClient dates parsing", async () => {
@@ -55,5 +55,3 @@ test("apiClient base url", async () => {
   t(c4, "../c/d", "https://a.com/c/d")
   t(c4, "../../c/d", "https://a.com/c/d")
 })
-
-test.run()

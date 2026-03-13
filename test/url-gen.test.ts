@@ -1,7 +1,7 @@
 import { trim } from "lodash-es"
+import { strictEqual as equal } from "node:assert"
+import { test } from "node:test"
 import ts from "typescript"
-import { test } from "uvu"
-import { equal } from "uvu/assert"
 import { prepareUrl } from "../src/generator"
 import { printCode } from "../src/printer"
 
@@ -48,5 +48,3 @@ test("url template", async () => {
   equal(await t("/users/{id}/update/{id}", { id: "idx" }), "/users/${idx}/update/${idx}")
   equal(await t("/users/{id}/u/{id}/{ver}", { id: "idx" }), "/users/${idx}/u/${idx}/{ver}")
 })
-
-test.run()

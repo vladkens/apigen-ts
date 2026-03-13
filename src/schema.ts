@@ -72,7 +72,7 @@ export const getRepSchema = (ctx: Context, config: Oas3Operation): OAS3 | undefi
 
   const firstSuccess = unref(ctx, get(config, ["responses", successCodes[0]], {}))
 
-  if (!firstSuccess || !('content' in firstSuccess)) return undefined
+  if (!firstSuccess || !("content" in firstSuccess)) return undefined
 
   const cts = Object.entries(firstSuccess.content ?? {}) //
     .filter((x) => x[1].schema)

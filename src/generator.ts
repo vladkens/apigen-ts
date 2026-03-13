@@ -1,4 +1,9 @@
-import redocly, { BaseResolver, Oas3Definition } from "@redocly/openapi-core"
+import {
+  BaseResolver,
+  createConfig,
+  Oas3Definition,
+  bundle as redoclyBundle,
+} from "@redocly/openapi-core"
 import { filterEmpty, filterNullable } from "array-utils-ts"
 import { isObject, lowerFirst, sortBy, uniqBy, upperFirst } from "lodash-es"
 import { convertObj } from "swagger2openapi"
@@ -17,7 +22,7 @@ const normalizeOpName = (val: string) => {
     .replace(/[^a-zA-Z0-9]/g, "_")
     .split("_")
     .filter((x) => x !== "" && !articles.has(x))
-    .map((x) => upperFirst(x))
+    .map((x) => upperFirst(x) as string)
 
   // eg: SSHKey -> sshKey
   tmp[0] = tmp[0].toUpperCase() === tmp[0] ? tmp[0].toLowerCase() : lowerFirst(tmp[0])
@@ -242,9 +247,9 @@ export const loadSchema = async ({
 }): Promise<Oas3Definition> => {
   if (url.startsWith("file://")) url = url.substring(7)
 
-  const { bundle } = await redocly.bundle({
+  const { bundle } = await redoclyBundle({
     ref: url,
-    config: await redocly.createConfig({}),
+    config: await createConfig({}),
     removeUnusedComponents: false,
     externalRefResolver: new BaseResolver({
       http: {
@@ -256,10 +261,11 @@ export const loadSchema = async ({
     }),
   })
 
-  if (bundle.parsed.swagger && upgrade) {
-    const { openapi } = await convertObj(bundle.parsed, { patch: true })
+  const parsed = bundle.parsed as Oas3Definition | Parameters<typeof convertObj>[0]
+  if ("swagger" in parsed && upgrade) {
+    const { openapi } = await convertObj(parsed, { patch: true })
     return openapi as Oas3Definition
   }
 
-  return bundle.parsed
+  return parsed as Oas3Definition
 }

@@ -1,5 +1,5 @@
-import { test } from "uvu"
-import { equal } from "uvu/assert"
+import { strictEqual as equal } from "node:assert"
+import { test } from "node:test"
 import { initCtx } from "../src/config"
 import { getOpName } from "../src/generator"
 
@@ -48,5 +48,3 @@ test("operation name", async () => {
   // reserved name
   // equal(t("get", "/fetch", ["fetch"], "fetch"), "users.getUsers")
 })
-
-test.run()

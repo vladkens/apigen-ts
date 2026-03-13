@@ -18,7 +18,7 @@ const main = async () => {
     await apigen({ source: source.url, output: outfile, parseDates: true })
   }
 
-  const cmd = `yarn tsc --noEmit examples/*.ts`
+  const cmd = `npx tsc --noEmit examples/*.ts`
   const { stdout, stderr } = await util.promisify(exec)(cmd)
   console.log(stdout, stderr)
 }
