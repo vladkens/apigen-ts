@@ -1,18 +1,19 @@
 {
   "compilerOptions": {
-    "strict": true,
     "allowJs": false,
-    "target": "esnext",
-    "noImplicitAny": true,
-    "moduleResolution": "node",
-    "forceConsistentCasingInFileNames": true,
     "alwaysStrict": true,
-    "module": "esnext",
-    "noEmit": true,
     "esModuleInterop": true,
+    "exactOptionalPropertyTypes": true,
+    "forceConsistentCasingInFileNames": true,
+    "module": "esnext",
+    "moduleResolution": "node",
+    "noEmit": true,
+    "noImplicitAny": true,
+    "resolveJsonModule": true,
     "skipLibCheck": true,
-    "resolveJsonModule": true
+    "strict": true,
+    "target": "esnext"
   },
-  "include": ["."],
-  "exclude": ["node_modules", "scripts/clients"]
+  "exclude": ["node_modules", "scripts/clients", "examples/local.*"],
+  "include": ["."]
 }

@@ -6,7 +6,13 @@ import { getOpName } from "../src/generator"
 test("operation name", async () => {
   const t = (method: string, path: string, tags?: string[], operationId?: string) => {
     const ctx = initCtx()
-    const cfg = { method, path, tags, operationId, responses: {} }
+    const cfg = {
+      method,
+      path,
+      responses: {},
+      ...(tags ? { tags } : {}),
+      ...(operationId ? { operationId } : {}),
+    }
     return getOpName(ctx, cfg).join(".")
   }
 

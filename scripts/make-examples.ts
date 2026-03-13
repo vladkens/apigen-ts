@@ -43,9 +43,9 @@ const main = async () => {
       output: outfile,
       parseDates: true,
       fetchOptions: false,
-      filterPaths: source.filterPaths,
-      includeTags: source.includeTags,
-      excludeTags: source.excludeTags,
+      ...(source.filterPaths ? { filterPaths: source.filterPaths } : {}),
+      ...(source.includeTags ? { includeTags: source.includeTags } : {}),
+      ...(source.excludeTags ? { excludeTags: source.excludeTags } : {}),
     })
   }
 

@@ -106,6 +106,10 @@ export const getCliConfig = () => {
     return tags.length ? tags : undefined
   }
 
+  const filterPaths = argv.flags.filterPaths ? new RegExp(argv.flags.filterPaths) : undefined
+  const includeTags = parseTags(argv.flags.includeTags)
+  const excludeTags = parseTags(argv.flags.excludeTags)
+
   const config: Config = {
     source: argv._.source,
     output: argv._.output ?? null,
@@ -113,10 +117,10 @@ export const getCliConfig = () => {
     parseDates: argv.flags.parseDates,
     inlineEnums: argv.flags.inlineEnums,
     fetchOptions: argv.flags.fetchOptions,
-    filterPaths: argv.flags.filterPaths ? new RegExp(argv.flags.filterPaths) : undefined,
-    includeTags: parseTags(argv.flags.includeTags),
-    excludeTags: parseTags(argv.flags.excludeTags),
     headers: parseHeaders(argv.flags.header),
+    ...(filterPaths ? { filterPaths } : {}),
+    ...(includeTags ? { includeTags } : {}),
+    ...(excludeTags ? { excludeTags } : {}),
   }
 
   return config

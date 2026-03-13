@@ -28,7 +28,7 @@ const getRouteKeys = async (
   doc: Oas3Definition,
   filterPaths?: RegExp | ((p: string) => boolean),
 ) => {
-  const ctx = initCtx({ doc, filterPaths })
+  const ctx = initCtx({ doc, ...(filterPaths ? { filterPaths } : {}) })
   const { modules } = await generateAst(ctx)
   return modules.map((m) => (m.name as { escapedText: string }).escapedText as string)
 }
