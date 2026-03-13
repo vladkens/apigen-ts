@@ -13,6 +13,9 @@ export type Config = {
   parseDates: boolean
   inlineEnums: boolean
   fetchOptions: boolean
+  filterPaths?: RegExp | ((path: string) => boolean)
+  includeTags?: string[]
+  excludeTags?: string[]
   resolveName?: (ctx: Context, op: OpConfig, proposal: OpName) => OpName | undefined
   headers: Record<string, string>
 }
@@ -78,8 +81,30 @@ export const getCliConfig = () => {
           'HTTP header as key=value (e.g., -H "x-api-key: your-key"). Used only when generating code.',
         default: [],
       },
+      filterPaths: {
+        type: String,
+        description: "Filter endpoints by path regex (e.g., --filter-paths '^/accounts')",
+      },
+      includeTags: {
+        type: [String],
+        description: "Only include operations with these tags (comma-separated or repeated flag)",
+        default: [],
+      },
+      excludeTags: {
+        type: [String],
+        description: "Exclude operations with these tags (comma-separated or repeated flag)",
+        default: [],
+      },
     },
   })
+
+  const parseTags = (items: string[]): string[] | undefined => {
+    const tags = items
+      .flatMap((x) => x.split(","))
+      .map((x) => x.trim())
+      .filter(Boolean)
+    return tags.length ? tags : undefined
+  }
 
   const config: Config = {
     source: argv._.source,
@@ -88,6 +113,9 @@ export const getCliConfig = () => {
     parseDates: argv.flags.parseDates,
     inlineEnums: argv.flags.inlineEnums,
     fetchOptions: argv.flags.fetchOptions,
+    filterPaths: argv.flags.filterPaths ? new RegExp(argv.flags.filterPaths) : undefined,
+    includeTags: parseTags(argv.flags.includeTags),
+    excludeTags: parseTags(argv.flags.excludeTags),
     headers: parseHeaders(argv.flags.header),
   }
 

@@ -22,6 +22,7 @@ Turn your OpenAPI spec into a typed TypeScript client with one command.
 - **Fetch-based.** Uses native `fetch`. Override it with your own function for auth, retries, or logging.
 - **All OpenAPI versions.** Supports v2 (Swagger), v3, and v3.1 — auto-upgrades v2 on the fly.
 - **Extras built in.** Automatic date parsing, string literal unions instead of enums, Prettier formatting.
+- **Filterable.** Include or exclude endpoints by path regex or tag — essential for large schemas.
 
 Unlike `openapi-typescript`, it generates a ready-to-call client — not just types. Unlike `openapi-generator-cli`, it's pure Node.js with zero Java dependency. Unlike `openapi-typescript-codegen`, it outputs a single file.
 
@@ -113,6 +114,26 @@ enum MyEnum {
 }
 ```
 
+### Filter by path
+
+Include only the endpoints you need — useful with large schemas (e.g. Cloudflare's 8 MB monolith):
+
+```sh
+npx apigen-ts ./openapi.json ./api-client.ts --filter-paths '^/accounts'
+```
+
+### Filter by tag
+
+```sh
+# include only endpoints tagged "pets" or "store"
+npx apigen-ts ./openapi.json ./api-client.ts --include-tags pets,store
+
+# exclude endpoints tagged "internal"
+npx apigen-ts ./openapi.json ./api-client.ts --exclude-tags internal
+```
+
+When both flags are set, `--exclude-tags` wins.
+
 ### AbortController / cancellation
 
 Pass `--fetch-options` to add an optional last argument to every generated method, accepting any [`RequestInit`](https://developer.mozilla.org/en-US/docs/Web/API/RequestInit) field (including `signal`):
@@ -184,6 +205,9 @@ await apigen({
   parseDates: true, // default: false
   inlineEnums: false, // default: false
   fetchOptions: true, // default: false
+  filterPaths: /^\/pets/, // only include paths matching regex
+  includeTags: ["pets", "store"], // only include these tags
+  excludeTags: ["internal"], // exclude these tags (wins over includeTags)
   headers: { "x-api-key": "secret-key" },
   resolveName(ctx, op, proposal) {
     // proposal is [namespace, methodName]

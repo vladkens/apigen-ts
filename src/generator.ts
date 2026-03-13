@@ -186,6 +186,12 @@ const prepareRoutes = async (ctx: Context) => {
     ctx.logTag = `${"[ALL]".toUpperCase().padEnd(6, " ")} ${path}`
     if (!isObject(pathConfig)) continue
 
+    if (ctx.filterPaths) {
+      const match =
+        ctx.filterPaths instanceof RegExp ? ctx.filterPaths.test(path) : ctx.filterPaths(path)
+      if (!match) continue
+    }
+
     if ("$ref" in pathConfig) {
       console.warn(`${ctx.logTag} $ref should be resolved before (skipping)`)
       continue
@@ -200,6 +206,10 @@ const prepareRoutes = async (ctx: Context) => {
       if (pathConfig.parameters) {
         config.parameters = [...(config.parameters ?? []), ...pathConfig.parameters]
       }
+
+      const opTags = (config.tags ?? []) as string[]
+      if (ctx.includeTags?.length && !opTags.some((t) => ctx.includeTags!.includes(t))) continue
+      if (ctx.excludeTags?.length && opTags.some((t) => ctx.excludeTags!.includes(t))) continue
 
       const [ns, op] = getOpName(ctx, { ...config, method, path })
       if (!routes[ns]) routes[ns] = []
