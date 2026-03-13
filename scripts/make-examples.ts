@@ -15,7 +15,7 @@ const main = async () => {
   for (const source of sources) {
     const outfile = `./examples/${source.name}.ts`
     console.log(`>> generating ${outfile} from ${source.url}`)
-    await apigen({ source: source.url, output: outfile, parseDates: true })
+    await apigen({ source: source.url, output: outfile, parseDates: true, fetchOptions: false })
   }
 
   const cmd = `npx tsc --noEmit examples/*.ts`

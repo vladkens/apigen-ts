@@ -1,7 +1,7 @@
 {
   "code-runner.executorMap": {
     "javascript": "node",
-    "typescript": "node --loader tsx"
+    "typescript": "node --import tsx"
   },
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "editor.formatOnSave": true,

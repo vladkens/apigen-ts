@@ -12,6 +12,7 @@ export type Config = {
   name: string
   parseDates: boolean
   inlineEnums: boolean
+  fetchOptions: boolean
   resolveName?: (ctx: Context, op: OpConfig, proposal: OpName) => OpName | undefined
   headers: Record<string, string>
 }
@@ -26,6 +27,7 @@ export const initCtx = (config?: Partial<Context>): Context => {
     doc: { openapi: "3.1.0" },
     parseDates: false,
     inlineEnums: false,
+    fetchOptions: false,
     headers: {},
     ...config,
     logTag: "",
@@ -64,6 +66,11 @@ export const getCliConfig = () => {
         description: "Use inline enums instead of enum types",
         default: false,
       },
+      fetchOptions: {
+        type: Boolean,
+        description: "Add fetch options (e.g. AbortSignal) as last argument to each method",
+        default: false,
+      },
       header: {
         type: [String],
         alias: "H",
@@ -80,6 +87,7 @@ export const getCliConfig = () => {
     name: argv.flags.name,
     parseDates: argv.flags.parseDates,
     inlineEnums: argv.flags.inlineEnums,
+    fetchOptions: argv.flags.fetchOptions,
     headers: parseHeaders(argv.flags.header),
   }
 

@@ -115,7 +115,20 @@ const prepareOp = (ctx: Context, cfg: OpConfig, opName: string) => {
     return f.createParameterDeclaration(undefined, undefined, name, undefined, type)
   })
 
+  if (ctx.fetchOptions) {
+    fnArgs.push(
+      f.createParameterDeclaration(
+        undefined,
+        undefined,
+        "opts",
+        f.createToken(ts.SyntaxKind.QuestionToken),
+        f.createTypeReferenceNode(f.createIdentifier("ApigenRequest"), undefined),
+      ),
+    )
+  }
+
   const cbArgs = filterNullable([
+    ctx.fetchOptions ? f.createSpreadAssignment(f.createIdentifier("opts")) : undefined,
     search.length ? f.createShorthandPropertyAssignment("search") : undefined,
     reqSchema && f.createShorthandPropertyAssignment("body"),
     reqSchema && reqSchema[0] !== "application/json"

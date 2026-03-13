@@ -113,6 +113,22 @@ enum MyEnum {
 }
 ```
 
+### AbortController / cancellation
+
+Pass `--fetch-options` to add an optional last argument to every generated method, accepting any [`RequestInit`](https://developer.mozilla.org/en-US/docs/Web/API/RequestInit) field (including `signal`):
+
+```sh
+npx apigen-ts ./openapi.json ./api-client.ts --fetch-options
+```
+
+```ts
+const controller = new AbortController()
+await api.pet.getPetById(1, { signal: controller.signal })
+
+// cancel the request
+controller.abort()
+```
+
 ### Error handling
 
 Non-2xx responses throw — the caught value is the parsed response body:
@@ -167,6 +183,7 @@ await apigen({
   name: "MyApiClient", // default: "ApiClient"
   parseDates: true, // default: false
   inlineEnums: false, // default: false
+  fetchOptions: true, // default: false
   headers: { "x-api-key": "secret-key" },
   resolveName(ctx, op, proposal) {
     // proposal is [namespace, methodName]
