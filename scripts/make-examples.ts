@@ -16,17 +16,17 @@ const sources: SourceDoc[] = [
   { name: "petstore31", url: "https://petstore31.swagger.io/api/v31/openapi.json" },
   { name: "features", url: "file://examples/features.yaml" },
   {
-    name: "petstore3-pet",
+    name: "local.store3-pet-only",
     url: "https://petstore3.swagger.io/api/v3/openapi.json",
     filterPaths: /^\/pet/,
   },
   {
-    name: "petstore3-store",
+    name: "local.store3-store",
     url: "https://petstore3.swagger.io/api/v3/openapi.json",
     includeTags: ["store"],
   },
   {
-    name: "petstore3-no-user",
+    name: "local.petstore3-no-user",
     url: "https://petstore3.swagger.io/api/v3/openapi.json",
     excludeTags: ["user"],
   },
