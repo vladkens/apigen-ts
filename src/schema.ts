@@ -66,11 +66,15 @@ export const getReqSchema = (ctx: Context, config: Oas3Operation) => {
 export const getRepSchema = (ctx: Context, config: Oas3Operation): OAS3 | undefined => {
   const successCodes = Object.keys(config.responses ?? {})
     .filter((x) => x.startsWith("2"))
-    .filter((x) => get(config, ["responses", x, "content"]))
+    .filter((x) => get(config, ["responses", x]))
 
   // if (successCodes.length > 1) console.warn(`${ctx.tag} multiple success codes ${successCodes}`)
 
-  const cts = Object.entries(get(config, ["responses", successCodes[0], "content"], {})) //
+  const firstSuccess = unref(ctx, get(config, ["responses", successCodes[0]], {}))
+
+  if (!firstSuccess || !('content' in firstSuccess)) return undefined
+
+  const cts = Object.entries(firstSuccess.content ?? {}) //
     .filter((x) => x[1].schema)
 
   if (cts.length === 0) return undefined
