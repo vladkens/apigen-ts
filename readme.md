@@ -134,9 +134,9 @@ npx apigen-ts ./openapi.json ./api-client.ts --exclude-tags internal
 
 When both flags are set, `--exclude-tags` wins.
 
-### AbortController / cancellation
+### Fetch options
 
-Pass `--fetch-options` to add an optional last argument to every generated method, accepting any [`RequestInit`](https://developer.mozilla.org/en-US/docs/Web/API/RequestInit) field (including `signal`):
+Pass `--fetch-options` to add an optional last argument to every generated method, accepting any [`RequestInit`](https://developer.mozilla.org/en-US/docs/Web/API/RequestInit) field:
 
 ```sh
 npx apigen-ts ./openapi.json ./api-client.ts --fetch-options
@@ -148,6 +148,9 @@ await api.pet.getPetById(1, { signal: controller.signal })
 
 // cancel the request
 controller.abort()
+
+// or disable automatic redirects for a single request
+await api.pet.getPetById(1, { redirect: "manual" })
 ```
 
 ### Error handling

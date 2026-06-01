@@ -1,7 +1,6 @@
 FROM node:alpine
+RUN npm install -g pnpm
 ARG TS_VER=latest
-
-RUN corepack enable
 
 WORKDIR /app
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
