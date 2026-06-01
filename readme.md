@@ -29,7 +29,7 @@ Unlike `openapi-typescript`, it generates a ready-to-call client — not just ty
 ## Install
 
 ```sh
-npm i apigen-ts --save-dev
+npm i -D apigen-ts
 ```
 
 ## Usage

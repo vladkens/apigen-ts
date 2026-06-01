@@ -1,20 +1,27 @@
-.PHONY: test test-ts test-matrix-ts clean update
+.PHONY: prepare check test build update test-matrix clean
 
-default: fmt
-	npm run ci
-	npx tsx scripts/make-examples.ts
+prepare:
+	pnpm run format
+	pnpm exec tsc --noEmit
+	pnpm exec tsc --ignoreConfig --noEmit examples/*.ts
 
-fmt:
-	npm run format
+check:
+	pnpm exec prettier --check .
+	pnpm exec tsc --noEmit
+	pnpm exec tsc --ignoreConfig --noEmit examples/*.ts
+	pnpm run test-cov
+	make build
 
 test:
-	npm test
+	pnpm test
+
+build:
+	pnpm run build
 
 update:
-	npx --yes npm-check-updates -u
-	npm install
+	pnpm exec npm-check-updates -u && pnpm i
 
-TS_VERSIONS := 5.0.4 5.1.6 5.2.2 5.3.3 5.4.5 5.5.4 5.6.3 5.7.3 5.8.3 5.9.2 next
+TS_VERSIONS := 5.0.4 5.1.6 5.2.2 5.3.3 5.4.5 5.5.4 5.6.3 5.7.3 5.8.3 5.9.2 6.0.3 next
 
 build-ts-%:
 	@echo "-- build $* --------------------"

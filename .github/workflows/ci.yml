@@ -18,10 +18,11 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node-version }}
-          cache: "npm"
 
-      - run: npm i -g npm@latest && npm i
-      - run: npm run ci
+      - run: corepack enable
+      - run: pnpm install --frozen-lockfile
+
+      - run: make check
 
   release:
     runs-on: ubuntu-latest
@@ -37,7 +38,8 @@ jobs:
           node-version: "24"
           registry-url: "https://registry.npmjs.org"
 
-      - run: npm i -g npm@latest && npm i
+      - run: corepack enable
+      - run: pnpm install --frozen-lockfile
 
       - name: Check package.json version matches tag
         run: |
@@ -48,7 +50,7 @@ jobs:
             exit 1
           fi
 
-      - run: npm run build
+      - run: pnpm run build
 
       - name: Extract changelog entry
         run: |
@@ -60,7 +62,7 @@ jobs:
           fi
           echo "$NOTES" > release_notes.txt
 
-      - run: npm publish --provenance --access public
+      - run: pnpm publish --provenance --access public
 
       - run: gh release create ${{ github.ref_name }} --title ${{ github.ref_name }} --notes-file release_notes.txt
         env:

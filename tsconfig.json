@@ -6,7 +6,7 @@
     "exactOptionalPropertyTypes": true,
     "forceConsistentCasingInFileNames": true,
     "module": "esnext",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "noEmit": true,
     "noImplicitAny": true,
     "resolveJsonModule": true,

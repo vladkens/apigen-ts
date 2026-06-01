@@ -1,4 +1,4 @@
-import { Oas3Schema, Oas3_1Schema, Referenced } from "@redocly/openapi-core/lib/typings/openapi"
+import type { Oas3Schema, Oas3_1Schema, Referenced } from "@redocly/openapi-core"
 import { filterEmpty } from "array-utils-ts"
 import { isArray, isBoolean, uniq, upperFirst } from "lodash-es"
 import ts from "typescript"

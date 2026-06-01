@@ -2,14 +2,15 @@ import {
   Oas3_1Schema,
   Oas3Operation,
   Oas3Parameter,
-  Oas3RequestBody,
   Oas3Schema,
   Referenced,
-} from "@redocly/openapi-core/lib/typings/openapi"
+} from "@redocly/openapi-core"
 import { get } from "lodash-es"
 import { Context } from "./config"
 
 export type OAS3 = Oas3Schema | Oas3_1Schema
+type Oas3RequestBody =
+  NonNullable<Oas3Operation["requestBody"]> extends Referenced<infer T> ? T : never
 
 // todo: wrong <T> typing
 export const unref = <T extends Oas3RequestBody | Oas3Parameter | OAS3>(

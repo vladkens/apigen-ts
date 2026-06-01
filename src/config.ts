@@ -1,5 +1,4 @@
-import { Oas3Definition } from "@redocly/openapi-core"
-import { Oas3Operation } from "@redocly/openapi-core/lib/typings/openapi"
+import type { Oas3Definition, Oas3Operation } from "@redocly/openapi-core"
 import { cli } from "cleye"
 import { name, version } from "../package.json"
 

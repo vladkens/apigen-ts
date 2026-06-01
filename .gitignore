@@ -4,5 +4,6 @@ coverage/
 dist/
 examples/local.*
 node_modules/
+.pnpm-store/
 scripts/clients/
 scripts/specs/

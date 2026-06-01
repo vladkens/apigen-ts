@@ -49,7 +49,7 @@ const main = async () => {
     })
   }
 
-  const cmd = `npx tsc --noEmit examples/*.ts`
+  const cmd = `pnpm exec tsc --ignoreConfig --noEmit examples/*.ts`
   const { stdout, stderr } = await util.promisify(exec)(cmd)
   console.log(stdout, stderr)
 }

@@ -1,12 +1,14 @@
 FROM node:alpine
 ARG TS_VER=latest
 
+RUN corepack enable
+
 WORKDIR /app
-COPY package.json package-lock.json ./
-RUN npm i -g npm@latest && npm i
-RUN npm i --save-dev typescript@${TS_VER}
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+RUN pnpm install --frozen-lockfile
+RUN pnpm add --save-dev typescript@${TS_VER}
 
 COPY tsconfig.json ./
 COPY src ./src
 COPY test ./test
-CMD ["sh", "-c", "/app/node_modules/.bin/tsc --version; npm test"]
+CMD ["sh", "-c", "/app/node_modules/.bin/tsc --version; pnpm test"]
