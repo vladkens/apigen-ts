@@ -1,5 +1,19 @@
 # Changelog
 
+## v1.3.1 – 2026-06-02
+
+### Improvements
+
+- Added support for TypeScript v6
+
+### Docs
+
+- Documented how to pass custom fetch options when generating API requests (#27)
+
+**Full Changelog**: https://github.com/vladkens/apigen-ts/compare/v1.3.0...v1.3.1
+
+---
+
 ## v1.3.0 — 2026-03-14
 
 ### Features
