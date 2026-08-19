@@ -96,15 +96,15 @@ export class ApiClient {
 
   pet = {
     addPet: (body: Pet) => {
-      return this.Fetch<Pet>("post", "/pet", { body })
+      return this.Fetch<Pet>("POST", "/pet", { body })
     },
 
     updatePet: (body: Pet) => {
-      return this.Fetch<Pet>("put", "/pet", { body })
+      return this.Fetch<Pet>("PUT", "/pet", { body })
     },
 
     getPetById: (petId: number) => {
-      return this.Fetch<Pet>("get", `/pet/${petId}`, {})
+      return this.Fetch<Pet>("GET", `/pet/${petId}`, {})
     },
   }
 }
