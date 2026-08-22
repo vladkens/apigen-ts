@@ -5,8 +5,8 @@ import { test } from "node:test"
 import os from "os"
 import path from "path"
 import { pathToFileURL } from "url"
-import { apigen } from "../src/main"
 import { ApiClient } from "../src/_template"
+import { apigen } from "../src/main"
 
 test("apiClient dates parsing", async () => {
   const t = async <T>(body: T) => {
