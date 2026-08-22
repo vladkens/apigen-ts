@@ -98,17 +98,17 @@ export class ApiClient {
     getStatus: () => {
       return this.Fetch<{
         status?: "active"
-      }>("get", "/status", {})
+      }>("GET", "/status", {})
     },
 
     getVersion: () => {
       return this.Fetch<{
         version?: "v1"
-      }>("get", "/version", {})
+      }>("GET", "/version", {})
     },
 
     getEvents: () => {
-      return this.Fetch<UserCreated | UserDeleted>("get", "/events", {})
+      return this.Fetch<UserCreated | UserDeleted>("GET", "/events", {})
     },
   }
 }

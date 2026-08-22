@@ -102,30 +102,30 @@ export class ApiClient {
         file?: File
       },
     ) => {
-      return this.Fetch<ApiResponse>("post", `/pet/${petId}/uploadImage`, {
+      return this.Fetch<ApiResponse>("POST", `/pet/${petId}/uploadImage`, {
         body,
         headers: { "content-type": "multipart/form-data" },
       })
     },
 
     addPet: (body: Pet) => {
-      return this.Fetch<void>("post", "/pet", { body })
+      return this.Fetch<void>("POST", "/pet", { body })
     },
 
     updatePet: (body: Pet) => {
-      return this.Fetch<void>("put", "/pet", { body })
+      return this.Fetch<void>("PUT", "/pet", { body })
     },
 
     findPetsByStatus: (search: { status?: ("available" | "pending" | "sold")[] }) => {
-      return this.Fetch<Pet[]>("get", "/pet/findByStatus", { search })
+      return this.Fetch<Pet[]>("GET", "/pet/findByStatus", { search })
     },
 
     findPetsByTags: (search: { tags?: string[] }) => {
-      return this.Fetch<Pet[]>("get", "/pet/findByTags", { search })
+      return this.Fetch<Pet[]>("GET", "/pet/findByTags", { search })
     },
 
     getPetById: (petId: number) => {
-      return this.Fetch<Pet>("get", `/pet/${petId}`, {})
+      return this.Fetch<Pet>("GET", `/pet/${petId}`, {})
     },
 
     updatePetWithForm: (
@@ -135,66 +135,66 @@ export class ApiClient {
         status?: string
       },
     ) => {
-      return this.Fetch<void>("post", `/pet/${petId}`, {
+      return this.Fetch<void>("POST", `/pet/${petId}`, {
         body,
         headers: { "content-type": "application/x-www-form-urlencoded" },
       })
     },
 
     deletePet: (petId: number) => {
-      return this.Fetch<void>("delete", `/pet/${petId}`, {})
+      return this.Fetch<void>("DELETE", `/pet/${petId}`, {})
     },
   }
 
   store = {
     getInventory: () => {
-      return this.Fetch<Record<string, number>>("get", "/store/inventory", {})
+      return this.Fetch<Record<string, number>>("GET", "/store/inventory", {})
     },
 
     placeOrder: (body: Order) => {
-      return this.Fetch<Order>("post", "/store/order", { body })
+      return this.Fetch<Order>("POST", "/store/order", { body })
     },
 
     getOrderById: (orderId: number) => {
-      return this.Fetch<Order>("get", `/store/order/${orderId}`, {})
+      return this.Fetch<Order>("GET", `/store/order/${orderId}`, {})
     },
 
     deleteOrder: (orderId: number) => {
-      return this.Fetch<void>("delete", `/store/order/${orderId}`, {})
+      return this.Fetch<void>("DELETE", `/store/order/${orderId}`, {})
     },
   }
 
   user = {
     createUsersWithListInput: (body: User[]) => {
-      return this.Fetch<void>("post", "/user/createWithList", { body })
+      return this.Fetch<void>("POST", "/user/createWithList", { body })
     },
 
     getUserByName: (username: string) => {
-      return this.Fetch<User>("get", `/user/${username}`, {})
+      return this.Fetch<User>("GET", `/user/${username}`, {})
     },
 
     updateUser: (username: string, body: User) => {
-      return this.Fetch<void>("put", `/user/${username}`, { body })
+      return this.Fetch<void>("PUT", `/user/${username}`, { body })
     },
 
     deleteUser: (username: string) => {
-      return this.Fetch<void>("delete", `/user/${username}`, {})
+      return this.Fetch<void>("DELETE", `/user/${username}`, {})
     },
 
     loginUser: (search: { username?: string; password?: string }) => {
-      return this.Fetch<string>("get", "/user/login", { search })
+      return this.Fetch<string>("GET", "/user/login", { search })
     },
 
     logoutUser: () => {
-      return this.Fetch<void>("get", "/user/logout", {})
+      return this.Fetch<void>("GET", "/user/logout", {})
     },
 
     createUsersWithArrayInput: (body: User[]) => {
-      return this.Fetch<void>("post", "/user/createWithArray", { body })
+      return this.Fetch<void>("POST", "/user/createWithArray", { body })
     },
 
     createUser: (body: User) => {
-      return this.Fetch<void>("post", "/user", { body })
+      return this.Fetch<void>("POST", "/user", { body })
     },
   }
 }

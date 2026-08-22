@@ -1,7 +1,12 @@
 import fetchMock from "fetch-mock"
+import fs from "fs/promises"
 import { strictEqual as equal } from "node:assert"
 import { test } from "node:test"
+import os from "os"
+import path from "path"
+import { pathToFileURL } from "url"
 import { ApiClient } from "../src/_template"
+import { apigen } from "../src/main"
 
 test("apiClient dates parsing", async () => {
   const t = async <T>(body: T) => {
@@ -54,4 +59,51 @@ test("apiClient base url", async () => {
   t(c4, "/c/d", "https://a.com/c/d")
   t(c4, "../c/d", "https://a.com/c/d")
   t(c4, "../../c/d", "https://a.com/c/d")
+})
+
+test("apiClient emits uppercase HTTP methods", async () => {
+  const schema = {
+    openapi: "3.1.0",
+    info: { title: "Test", version: "1.0.0" },
+    paths: {
+      "/things": {
+        get: {
+          tags: ["things"],
+          operationId: "listThings",
+          responses: { "200": { description: "ok" } },
+        },
+        patch: {
+          tags: ["things"],
+          operationId: "patchThings",
+          responses: { "200": { description: "ok" } },
+        },
+      },
+    },
+  }
+
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "apigen-ts-"))
+  const source = path.join(dir, "openapi.json")
+  const output = path.join(dir, "client.ts")
+  const prevFetch = globalThis.fetch
+  const seen: string[] = []
+
+  await fs.writeFile(source, JSON.stringify(schema))
+  await apigen({ source: pathToFileURL(source).href, output })
+
+  globalThis.fetch = async (_url, options) => {
+    seen.push(options?.method ?? "")
+    return new Response("{}")
+  }
+
+  try {
+    const { ApiClient: Client } = await import(pathToFileURL(output).href)
+    const api = new Client({ baseUrl: "http://localhost" })
+    await api.things.listThings()
+    await api.things.patchThings()
+
+    equal(seen[0], "GET")
+    equal(seen[1], "PATCH")
+  } finally {
+    globalThis.fetch = prevFetch
+  }
 })

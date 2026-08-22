@@ -158,7 +158,7 @@ const prepareOp = (ctx: Context, cfg: OpConfig, opName: string) => {
             f.createIdentifier("this.Fetch"),
             [makeType(ctx, repSchema)],
             [
-              f.createStringLiteral(cfg.method), // method
+              f.createStringLiteral(cfg.method.toUpperCase()), // method
               prepareUrl(cfg.path, urlReplacements), // path
               f.createObjectLiteralExpression(cbArgs), // { query, body, headers }
             ],
