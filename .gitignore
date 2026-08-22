@@ -1,9 +1,6 @@
-.claude/**/*.local.json
 .DS_Store
 coverage/
 dist/
 examples/local.*
+generated/
 node_modules/
-.pnpm-store/
-scripts/clients/
-scripts/specs/

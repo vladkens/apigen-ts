@@ -2,18 +2,33 @@ import {
   BaseResolver,
   createConfig,
   Oas3Definition,
+  Oas3PathItem,
   bundle as redoclyBundle,
+  Referenced,
 } from "@redocly/openapi-core"
 import { filterEmpty, filterNullable } from "array-utils-ts"
 import { isObject, lowerFirst, sortBy, uniqBy, upperFirst } from "lodash-es"
 import { convertObj } from "swagger2openapi"
 import ts from "typescript"
 import { Context, OpConfig, OpName } from "./config"
-import { getRepSchema, getReqSchema, unref } from "./schema"
+import { getRepSchema, getReqSchema, OAS3, unref } from "./schema"
 import { makeType, makeTypeAlias, normalizeIdentifier } from "./type-gen"
 
 const f = ts.factory
-const HttpMethods = ["get", "post", "put", "patch", "delete", "head", "options", "trace"] as const
+type Routes = Record<string, ts.PropertyAssignment[]>
+type Param = { name: string; schema?: Referenced<OAS3> }
+
+const HttpMethods = [
+  "get",
+  "post",
+  "put",
+  "patch",
+  "delete",
+  "head",
+  "options",
+  "trace",
+  "query",
+] as const
 
 const normalizeOpName = (val: string) => {
   const articles = new Set(["a", "an", "the"])
@@ -83,7 +98,7 @@ export const prepareUrl = (url: string, rename: Record<string, string>) => {
   )
 }
 
-const prepareOp = (ctx: Context, cfg: OpConfig, opName: string) => {
+const prepareOp = (ctx: Context, cfg: OpConfig, opName: string, httpMethod: string) => {
   cfg.parameters = cfg.parameters ?? []
 
   const reqSchema = getReqSchema(ctx, cfg)
@@ -91,7 +106,7 @@ const prepareOp = (ctx: Context, cfg: OpConfig, opName: string) => {
   const allParams = filterNullable(cfg.parameters.map((x) => unref(ctx, x)))
 
   // prettier-ignore
-  const params = uniqBy(allParams.filter((x) => x.in === "path"), "name")
+  const params: Param[] = uniqBy(allParams.filter((x) => x.in === "path"), "name")
   if (reqSchema) params.push({ name: "body", schema: reqSchema[1] })
 
   const search = allParams.filter((x) => x.in === "query")
@@ -158,7 +173,7 @@ const prepareOp = (ctx: Context, cfg: OpConfig, opName: string) => {
             f.createIdentifier("this.Fetch"),
             [makeType(ctx, repSchema)],
             [
-              f.createStringLiteral(cfg.method.toUpperCase()), // method
+              f.createStringLiteral(httpMethod), // method
               prepareUrl(cfg.path, urlReplacements), // path
               f.createObjectLiteralExpression(cbArgs), // { query, body, headers }
             ],
@@ -179,12 +194,48 @@ const prepareNs = (ctx: Context, name: string, handlers: ts.PropertyAssignment[]
   )
 }
 
-const prepareRoutes = async (ctx: Context) => {
-  const routes: Record<string, ts.PropertyAssignment[]> = {}
+const addOp = (
+  ctx: Context,
+  routes: Routes,
+  pathConfig: Oas3PathItem,
+  cfg: OpConfig,
+  httpMethod: string,
+) => {
+  ctx.logTag = `${httpMethod.padEnd(6, " ")} ${cfg.path}`
 
-  for (const [path, pathConfig] of Object.entries(ctx.doc.paths ?? {})) {
+  if (pathConfig.parameters) {
+    cfg.parameters = [...(cfg.parameters ?? []), ...pathConfig.parameters]
+  }
+
+  const opTags = (cfg.tags ?? []) as string[]
+  if (ctx.includeTags?.length && !opTags.some((t) => ctx.includeTags!.includes(t))) return
+  if (ctx.excludeTags?.length && opTags.some((t) => ctx.excludeTags!.includes(t))) return
+
+  const [ns, op] = getOpName(ctx, cfg)
+  if (!routes[ns]) routes[ns] = []
+
+  const joined = [ns, op].join(".")
+  if (ctx.usedNames.has(joined)) {
+    // console.warn(`${ctx.tag} duplicate operation ${joined} (skipping)`)
+    return
+  } else {
+    ctx.usedNames.add(joined)
+  }
+
+  try {
+    routes[ns].push(prepareOp(ctx, cfg, op, httpMethod))
+  } catch (e) {
+    console.error(`${ctx.logTag} - ${e}`, cfg)
+    throw e
+  }
+}
+
+const prepareRoutes = async (ctx: Context) => {
+  const routes: Routes = {}
+
+  for (const [path, value] of Object.entries(ctx.doc.paths ?? {})) {
     ctx.logTag = `${"[ALL]".toUpperCase().padEnd(6, " ")} ${path}`
-    if (!isObject(pathConfig)) continue
+    if (!isObject(value)) continue
 
     if (ctx.filterPaths) {
       const match =
@@ -192,42 +243,20 @@ const prepareRoutes = async (ctx: Context) => {
       if (!match) continue
     }
 
-    if ("$ref" in pathConfig) {
-      console.warn(`${ctx.logTag} $ref should be resolved before (skipping)`)
-      continue
-    }
+    const pathConfig = unref(ctx, value)
+    if (!pathConfig) continue
 
+    // OpenAPI 3.2 stores custom HTTP methods in additionalOperations, preserving their casing.
     for (const method of HttpMethods) {
-      ctx.logTag = `${method.toUpperCase().padEnd(6, " ")} ${path}`
-
       const config = pathConfig[method]
       if (!config) continue
+      addOp(ctx, routes, pathConfig, { ...config, method, path }, method.toUpperCase())
+    }
 
-      if (pathConfig.parameters) {
-        config.parameters = [...(config.parameters ?? []), ...pathConfig.parameters]
-      }
-
-      const opTags = (config.tags ?? []) as string[]
-      if (ctx.includeTags?.length && !opTags.some((t) => ctx.includeTags!.includes(t))) continue
-      if (ctx.excludeTags?.length && opTags.some((t) => ctx.excludeTags!.includes(t))) continue
-
-      const [ns, op] = getOpName(ctx, { ...config, method, path })
-      if (!routes[ns]) routes[ns] = []
-
-      const joined = [ns, op].join(".")
-      if (ctx.usedNames.has(joined)) {
-        // console.warn(`${ctx.tag} duplicate operation ${joined} (skipping)`)
-        continue
-      } else {
-        ctx.usedNames.add(joined)
-      }
-
-      try {
-        routes[ns].push(prepareOp(ctx, { ...config, method, path }, op))
-      } catch (e) {
-        console.error(`${ctx.logTag} - ${e}`, config)
-        throw e
-      }
+    for (const [method, value] of Object.entries(pathConfig.additionalOperations ?? {})) {
+      const config = unref(ctx, value)
+      if (!config) continue
+      addOp(ctx, routes, pathConfig, { ...config, method, path }, method)
     }
   }
 

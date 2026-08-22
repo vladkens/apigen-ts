@@ -1,0 +1,103 @@
+# Spec: https://spec.openapis.org/oas/v3.1.0.html
+# Supported: type arrays/null, primitive const, boolean schemas, prefixItems, pathItems
+# Unsupported: webhooks, custom schema dialects, parameter/file encoding
+
+openapi: 3.1.0
+info:
+  title: OpenAPI 3.1 Features
+  version: 1.0.0
+
+paths:
+  /status:
+    $ref: "#/components/pathItems/Status"
+
+  /widgets/batch:
+    delete:
+      tags: [widgets]
+      operationId: deleteWidgets
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ids]
+              properties:
+                ids:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        "200":
+          description: Deleted widgets
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Widget"
+
+  /widgets/{id}:
+    get:
+      tags: [widgets]
+      operationId: getWidget
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: A widget
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Widget"
+
+components:
+  pathItems:
+    Status:
+      get:
+        tags: [system]
+        operationId: getStatus
+        responses:
+          "200":
+            description: Service status
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/Status"
+
+  schemas:
+    AnyValue: true
+    NoValue: false
+
+    Status:
+      type: object
+      required: [ready, version]
+      properties:
+        ready:
+          type: boolean
+          const: true
+        version:
+          type: integer
+          const: 1
+
+    Widget:
+      type: object
+      required: [id, kind, label, position]
+      properties:
+        id:
+          type: string
+        kind:
+          type: string
+          const: widget
+        label:
+          type: [string, "null"]
+        position:
+          type: array
+          prefixItems:
+            - type: number
+            - type: number
+          items: false

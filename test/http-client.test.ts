@@ -63,7 +63,7 @@ test("apiClient base url", async () => {
 
 test("apiClient emits uppercase HTTP methods", async () => {
   const schema = {
-    openapi: "3.1.0",
+    openapi: "3.2.0",
     info: { title: "Test", version: "1.0.0" },
     paths: {
       "/things": {
@@ -75,6 +75,11 @@ test("apiClient emits uppercase HTTP methods", async () => {
         patch: {
           tags: ["things"],
           operationId: "patchThings",
+          responses: { "200": { description: "ok" } },
+        },
+        query: {
+          tags: ["things"],
+          operationId: "queryThings",
           responses: { "200": { description: "ok" } },
         },
       },
@@ -100,9 +105,11 @@ test("apiClient emits uppercase HTTP methods", async () => {
     const api = new Client({ baseUrl: "http://localhost" })
     await api.things.listThings()
     await api.things.patchThings()
+    await api.things.queryThings()
 
     equal(seen[0], "GET")
     equal(seen[1], "PATCH")
+    equal(seen[2], "QUERY")
   } finally {
     globalThis.fetch = prevFetch
   }

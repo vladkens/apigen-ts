@@ -5,31 +5,13 @@ import { apigen } from "../src/main"
 type SourceDoc = {
   name: string
   url: string
-  filterPaths?: RegExp
-  includeTags?: string[]
-  excludeTags?: string[]
 }
 
 const sources: SourceDoc[] = [
   { name: "petstore2", url: "https://petstore.swagger.io/v2/swagger.json" },
   { name: "petstore3", url: "https://petstore3.swagger.io/api/v3/openapi.json" },
-  { name: "petstore31", url: "https://petstore31.swagger.io/api/v31/openapi.json" },
-  { name: "features", url: "file://examples/features.yaml" },
-  {
-    name: "local.store3-pet-only",
-    url: "https://petstore3.swagger.io/api/v3/openapi.json",
-    filterPaths: /^\/pet/,
-  },
-  {
-    name: "local.store3-store",
-    url: "https://petstore3.swagger.io/api/v3/openapi.json",
-    includeTags: ["store"],
-  },
-  {
-    name: "local.petstore3-no-user",
-    url: "https://petstore3.swagger.io/api/v3/openapi.json",
-    excludeTags: ["user"],
-  },
+  { name: "local.openapi31", url: "file://scripts/example-specs/openapi31.yml" },
+  { name: "local.openapi32", url: "file://scripts/example-specs/openapi32.yml" },
 ]
 
 const main = async () => {
@@ -43,9 +25,6 @@ const main = async () => {
       output: outfile,
       parseDates: true,
       fetchOptions: false,
-      ...(source.filterPaths ? { filterPaths: source.filterPaths } : {}),
-      ...(source.includeTags ? { includeTags: source.includeTags } : {}),
-      ...(source.excludeTags ? { excludeTags: source.excludeTags } : {}),
     })
   }
 

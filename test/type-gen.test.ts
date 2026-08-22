@@ -30,6 +30,8 @@ test("type inline", async () => {
   t({ type: "integer" }, "number")
   t({ type: "boolean" }, "boolean")
   t({ type: "null" }, "null")
+  t(true, "unknown")
+  t(false, "never")
   t({ type: "file" }, "unknown")
   t({ type: "date" }, "unknown")
   t({ type: "object" }, "object") // should be unknown?
@@ -80,6 +82,13 @@ test("type inline", async () => {
   // t({ type: "number", enum: ["a", "b"] }, `"a" | "b"`)
   // t({ type: "boolean", enum: [1, 2] }, `1 | 2`)
   t({ type: "date", enum: ["a"] }, `unknown`)
+
+  // const (3.1)
+  t({ type: "number", const: 42 }, "42")
+  t({ type: "number", const: -42 }, "-42")
+  t({ type: "boolean", const: true }, "true")
+  t({ type: "boolean", const: false }, "false")
+  t({ type: "null", const: null }, "null")
 
   // enum without type
   t({ enum: ["a", "b"] }, `"a" | "b"`)

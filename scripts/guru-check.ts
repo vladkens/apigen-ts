@@ -3,7 +3,7 @@ import fs from "fs/promises"
 import { loadSchema } from "../src/generator"
 import { apigen } from "../src/main"
 
-const BaseDir = "./scripts"
+const BaseDir = "./generated/guru"
 
 type GuruRec = { preferred: string; versions: Record<string, { swaggerUrl: string }> }
 type GuruRep = Record<string, GuruRec>
@@ -80,7 +80,7 @@ const generateClients = async () => {
   console.log(`versions: ${Object.entries(versions).map((x) => x.join(" - ")).join(", ")}`)
   if (failed.length) console.log(`failed ids: ${failed.join(", ")}`)
 
-  // NODE_OPTIONS="--max-old-space-size=8192" npx tsc --noEmit ./scripts/clients/*.ts
+  // NODE_OPTIONS="--max-old-space-size=8192" npx tsc --noEmit ./generated/guru/clients/*.ts
   // const cmd = `npx tsc --noEmit ${BaseDir}/clients/*.ts`
   // const { stdout, stderr } = await util.promisify(exec)(cmd, {
   //   env: { ...process.env, NODE_OPTIONS: "--max-old-space-size=8192" },

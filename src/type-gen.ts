@@ -36,7 +36,7 @@ export const normalizeIdentifier = (val: string, asVar = false) => {
 }
 
 const makeInlineEnum = (s: OAS3) => {
-  if (!s.enum) return undefined
+  if (isBoolean(s) || !s.enum) return undefined
 
   // https://swagger.io/docs/specification/v3_0/data-models/enums/
   const values = filterEmpty(s.enum) as Array<string | number | boolean>
@@ -77,8 +77,18 @@ const makeInlineEnum = (s: OAS3) => {
   return undefined
 }
 
+const makeConst = (s: OAS3) => {
+  if (isBoolean(s) || !("const" in s)) return undefined
+
+  const value = s.const
+  if (!["string", "number", "boolean"].includes(typeof value)) return undefined
+  const t = makeInlineEnum({ ...s, enum: [value] })
+  return t && ts.isUnionTypeNode(t) ? t.types[0] : t
+}
+
 const makeObject = (ctx: Context, s: OAS3): ts.TypeNode => {
-  if (s.type !== "object") throw new Error(`makeObject: not an object ${JSON.stringify(s)}`)
+  if (isBoolean(s) || s.type !== "object")
+    throw new Error(`makeObject: not an object ${JSON.stringify(s)}`)
 
   if (s.additionalProperties && !isBoolean(s.additionalProperties)) {
     return f.createTypeReferenceNode("Record", [
@@ -102,6 +112,9 @@ export const makeType = (ctx: Context, s?: Referenced<OAS3>): ts.TypeNode => {
 
   if (s === undefined) return f.createKeywordTypeNode(ts.SyntaxKind.VoidKeyword)
   if (s === null) return f.createLiteralTypeNode(f.createNull())
+  if (isBoolean(s)) {
+    return f.createKeywordTypeNode(s ? ts.SyntaxKind.UnknownKeyword : ts.SyntaxKind.NeverKeyword)
+  }
 
   if ("$ref" in s && s.$ref) {
     const parts = s.$ref.replace("#/", "").split("/")
@@ -112,7 +125,7 @@ export const makeType = (ctx: Context, s?: Referenced<OAS3>): ts.TypeNode => {
 
     // expand full type from ref (may duplicate definitions)
     const t = unref(ctx, s)
-    if (!t) throw new Error(`makeTypeRef: ref not found ${JSON.stringify(s)}`)
+    if (t === undefined) throw new Error(`makeTypeRef: ref not found ${JSON.stringify(s)}`)
     return makeType(ctx, t)
   }
 
@@ -121,6 +134,9 @@ export const makeType = (ctx: Context, s?: Referenced<OAS3>): ts.TypeNode => {
   if ("allOf" in s && s.allOf) return f.createIntersectionTypeNode(s.allOf.map(mk))
 
   if ("type" in s && s.type === "integer") s.type = "number"
+
+  const constant = makeConst(s)
+  if (constant) return constant
 
   if ("enum" in s && s.enum && !Array.isArray(s.type)) {
     const isArray = s.type === "array"
@@ -151,7 +167,6 @@ export const makeType = (ctx: Context, s?: Referenced<OAS3>): ts.TypeNode => {
     if (s.type === "object") t = makeObject(ctx, s)
     else if (s.type === "boolean") t = f.createKeywordTypeNode(ts.SyntaxKind.BooleanKeyword)
     else if (s.type === "number") t = f.createKeywordTypeNode(ts.SyntaxKind.NumberKeyword)
-    else if (isConstantString(s)) t = f.createLiteralTypeNode(f.createStringLiteral(s.const))
     else if (s.type === "string") t = f.createKeywordTypeNode(ts.SyntaxKind.StringKeyword)
     else if (s.type === "null") t = f.createLiteralTypeNode(f.createNull())
     else if (isArray(s.type)) t = makeLiteralUnion(ctx, s.type)
@@ -181,6 +196,7 @@ export const makeType = (ctx: Context, s?: Referenced<OAS3>): ts.TypeNode => {
 }
 
 const isStringEnum = (s: Referenced<OAS3>): s is Oas3Schema & { enum: string[] } => {
+  if (isBoolean(s)) return false
   if ("enum" in s && s.enum) {
     return s.enum.every((x) => typeof x === "string")
   }
@@ -188,11 +204,7 @@ const isStringEnum = (s: Referenced<OAS3>): s is Oas3Schema & { enum: string[] }
 }
 
 const isPrefixItems = (s: OAS3): s is Oas3_1Schema => {
-  return (s as Oas3_1Schema).prefixItems !== undefined
-}
-
-const isConstantString = (s: OAS3): s is Oas3_1Schema & { const: string } => {
-  return s.type === "string" && (s as Oas3_1Schema).const !== undefined
+  return !isBoolean(s) && (s as Oas3_1Schema).prefixItems !== undefined
 }
 
 export const makeTypeAlias = (ctx: Context, name: string, s: Referenced<OAS3>) => {
