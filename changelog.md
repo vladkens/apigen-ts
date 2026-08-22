@@ -1,5 +1,21 @@
 # Changelog
 
+## v1.4.0 – 2026-08-22
+
+### Features
+
+- Added OpenAPI 3.2 support for QUERY operations, custom HTTP methods, and referenced media types
+- Improved OpenAPI 3.1 support for boolean schemas, primitive constants, and reusable path items
+
+### Fixes
+
+- Fixed client generation for models that conflict with JavaScript and Fetch API globals
+- Generated uppercase standard HTTP methods in API requests (#30, by @jsphpl)
+
+**Full Changelog**: https://github.com/vladkens/apigen-ts/compare/v1.3.1...v1.4.0
+
+---
+
 ## v1.3.1 – 2026-06-02
 
 ### Improvements
