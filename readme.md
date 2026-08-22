@@ -3,7 +3,7 @@
 <div align="center">
 
 [<img src="https://badges.ws/npm/v/apigen-ts" alt="version" />](https://npmjs.org/package/apigen-ts)
-[<img src="https://packagephobia.com/badge?p=array-utils-ts" alt="size" />](https://packagephobia.now.sh/result?p=apigen-ts)
+[<img src="https://badges.ws/packagephobia/publish/apigen-ts" alt="size" />](https://packagephobia.com/result?p=apigen-ts)
 [<img src="https://badges.ws/npm/dm/apigen-ts" alt="downloads" />](https://npmjs.org/package/apigen-ts)
 [<img src="https://badges.ws/github/license/vladkens/apigen-ts" alt="license" />](https://github.com/vladkens/apigen-ts/blob/main/LICENSE)
 [<img src="https://badges.ws/badge/-/buy%20me%20a%20coffee/ff813f?icon=buymeacoffee&label" alt="donate" />](https://buymeacoffee.com/vladkens)
@@ -18,7 +18,7 @@ Turn your OpenAPI spec into a typed TypeScript client with one command.
 
 - **One file.** Outputs a single `api-client.ts` — no scattered modules, no runtime deps in generated code.
 - **Fully typed.** Every method returns the exact response type from your schema. No casting, no `any`.
-- **Pure Node.js.** No Java, no Docker. Works with `npx` in any project.
+- **Pure Node.js.** No Java, no Docker. Works with `pnpm` in any project.
 - **Fetch-based.** Uses native `fetch`. Override it with your own function for auth, retries, or logging.
 - **All OpenAPI versions.** Supports v2 (Swagger), v3, and v3.1 — auto-upgrades v2 on the fly.
 - **Extras built in.** Automatic date parsing, string literal unions instead of enums, Prettier formatting.
@@ -29,7 +29,7 @@ Unlike `openapi-typescript`, it generates a ready-to-call client — not just ty
 ## Install
 
 ```sh
-npm i -D apigen-ts
+pnpm add -D apigen-ts
 ```
 
 ## Usage
@@ -38,16 +38,16 @@ npm i -D apigen-ts
 
 ```sh
 # From a local file
-npx apigen-ts ./openapi.json ./api-client.ts
+pnpm apigen-ts ./openapi.json ./api-client.ts
 
 # From a URL
-npx apigen-ts https://petstore3.swagger.io/api/v3/openapi.json ./api-client.ts
+pnpm apigen-ts https://petstore3.swagger.io/api/v3/openapi.json ./api-client.ts
 
 # From a protected URL
-npx apigen-ts https://secret-api.example.com ./api-client.ts -H "x-api-key: secret-key"
+pnpm apigen-ts https://secret-api.example.com ./api-client.ts -H "x-api-key: secret-key"
 ```
 
-Run `npx apigen-ts --help` for all options. See [generated examples](./examples/).
+Run `pnpm apigen-ts --help` for all options. See [generated examples](./examples/).
 
 ### 2. Import
 
@@ -87,7 +87,7 @@ await api.protectedRoute.get() // authenticated
 ### Automatic date parsing
 
 ```sh
-npx apigen-ts ./openapi.json ./api-client.ts --parse-dates
+pnpm apigen-ts ./openapi.json ./api-client.ts --parse-dates
 ```
 
 ```ts
@@ -100,7 +100,7 @@ const createdAt: Date = pet.createdAt // parsed from format=date-time string
 Pass `--inline-enums` to generate string literal unions — useful for Node.js [type stripping](https://nodejs.org/api/typescript.html#type-stripping):
 
 ```sh
-npx apigen-ts ./openapi.json ./api-client.ts --inline-enums
+pnpm apigen-ts ./openapi.json ./api-client.ts --inline-enums
 ```
 
 ```ts
@@ -119,17 +119,17 @@ enum MyEnum {
 Include only the endpoints you need — useful with large schemas (e.g. Cloudflare's 8 MB monolith):
 
 ```sh
-npx apigen-ts ./openapi.json ./api-client.ts --filter-paths '^/accounts'
+pnpm apigen-ts ./openapi.json ./api-client.ts --filter-paths '^/accounts'
 ```
 
 ### Filter by tag
 
 ```sh
 # include only endpoints tagged "pets" or "store"
-npx apigen-ts ./openapi.json ./api-client.ts --include-tags pets,store
+pnpm apigen-ts ./openapi.json ./api-client.ts --include-tags pets,store
 
 # exclude endpoints tagged "internal"
-npx apigen-ts ./openapi.json ./api-client.ts --exclude-tags internal
+pnpm apigen-ts ./openapi.json ./api-client.ts --exclude-tags internal
 ```
 
 When both flags are set, `--exclude-tags` wins.
@@ -139,7 +139,7 @@ When both flags are set, `--exclude-tags` wins.
 Pass `--fetch-options` to add an optional last argument to every generated method, accepting any [`RequestInit`](https://developer.mozilla.org/en-US/docs/Web/API/RequestInit) field:
 
 ```sh
-npx apigen-ts ./openapi.json ./api-client.ts --fetch-options
+pnpm apigen-ts ./openapi.json ./api-client.ts --fetch-options
 ```
 
 ```ts
