@@ -1,4 +1,4 @@
-.PHONY: prepare check test build update test-matrix clean
+.PHONY: prepare check test build update examples clean
 
 prepare:
 	pnpm run format
@@ -19,9 +19,19 @@ build:
 	pnpm run build
 
 update:
-	pnpm exec npm-check-updates -u && pnpm i
+	pnpm self-update 11
+	pnpm update npm-check-updates --latest
+	pnpm exec npm-check-updates --reject typescript --upgrade && pnpm i
 
-TS_VERSIONS := 5.0.4 5.1.6 5.2.2 5.3.3 5.4.5 5.5.4 5.6.3 5.7.3 5.8.3 5.9.2 6.0.3 next
+examples:
+	pnpm tsx scripts/make-examples.ts
+	$(MAKE) prepare
+
+clean:
+	docker images --format "{{.Repository}}:{{.Tag}}" | grep "^apigen_ts" | xargs -r docker rmi --force
+
+.PHONY: test-matrix
+TS_VERSIONS := 5.0 5.1 5.2 5.3 5.4 5.5 5.6 5.7 5.8 5.9 6.0
 
 build-ts-%:
 	@echo "-- build $* --------------------"
@@ -34,6 +44,3 @@ run-ts-%:
 test-matrix:
 	@$(MAKE) -j$(words $(TS_VERSIONS)) $(addprefix build-ts-,$(TS_VERSIONS))
 	@$(MAKE) $(addprefix run-ts-,$(TS_VERSIONS))
-
-clean:
-	docker images --format "{{.Repository}}:{{.Tag}}" | grep "^apigen_ts" | xargs -r docker rmi --force

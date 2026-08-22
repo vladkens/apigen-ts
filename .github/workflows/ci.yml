@@ -4,6 +4,9 @@ on:
   push:
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -12,15 +15,12 @@ jobs:
       fail-fast: false
       matrix:
         # https://nodejs.org/en/about/previous-releases#nodejs-releases
-        node-version: [22, 24, 25]
+        node-version: [22, 24, 26]
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@v7
+      - uses: pnpm/setup@v2
         with:
-          node-version: ${{ matrix.node-version }}
-
-      - run: corepack enable
-      - run: pnpm install --frozen-lockfile
+          runtime: node@${{ matrix.node-version }}
 
       - run: make check
 
@@ -32,14 +32,10 @@ jobs:
       contents: write
       id-token: write
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@v7
+      - uses: pnpm/setup@v2
         with:
-          node-version: "24"
-          registry-url: "https://registry.npmjs.org"
-
-      - run: corepack enable
-      - run: pnpm install --frozen-lockfile
+          runtime: node@26
 
       - name: Check package.json version matches tag
         run: |
@@ -55,7 +51,7 @@ jobs:
       - name: Extract changelog entry
         run: |
           VERSION="${{ github.ref_name }}"
-          NOTES=$(awk "/^## ${VERSION}/{found=1; next} /^## /{found=0} found" changelog.md)
+          NOTES=$(awk "/^## ${VERSION}/{found=1; next} /^## /{found=0} found && !/^---$/" changelog.md)
           if [ -z "$NOTES" ]; then
             echo "Error: no changelog entry found for ${VERSION}"
             exit 1
