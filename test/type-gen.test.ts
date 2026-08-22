@@ -83,6 +83,9 @@ test("type inline", async () => {
   // t({ type: "boolean", enum: [1, 2] }, `1 | 2`)
   t({ type: "date", enum: ["a"] }, `unknown`)
 
+  // references to runtime names
+  t({ $ref: "#/components/schemas/URL" }, `$URL`)
+
   // const (3.1)
   t({ type: "number", const: 42 }, "42")
   t({ type: "number", const: -42 }, "-42")
@@ -202,6 +205,9 @@ test("type alias", async () => {
   t({ name: "for", type: "string" }, `type $for = string`)
   t({ name: "type", type: "string" }, `type type = string`) // no rename
   t({ name: "string", type: "string" }, `type $string = string`)
+  t({ name: "Headers", type: "string" }, `type $Headers = string`)
+  t({ name: "JSON", type: "string" }, `type $JSON = string`)
+  t({ name: "URL", type: "string" }, `type $URL = string`)
 
   // check for bad names
   t({ name: "1", type: "string" }, `type $1 = string`)

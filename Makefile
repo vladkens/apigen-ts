@@ -24,7 +24,7 @@ update:
 	pnpm exec npm-check-updates --reject typescript --upgrade && pnpm i
 
 examples:
-	pnpm tsx scripts/make-examples.ts
+	pnpm exec tsx scripts/make-examples.ts
 	$(MAKE) prepare
 
 clean:
@@ -44,3 +44,11 @@ run-ts-%:
 test-matrix:
 	@$(MAKE) -j$(words $(TS_VERSIONS)) $(addprefix build-ts-,$(TS_VERSIONS))
 	@$(MAKE) $(addprefix run-ts-,$(TS_VERSIONS))
+
+.PHONY: guru-generate guru-check
+
+guru-generate:
+	pnpm exec tsx scripts/guru-check.ts
+
+guru-check:
+	find ./generated/guru/clients/local -name '*.ts' -print0 | env NODE_OPTIONS="--max-old-space-size=4096" xargs -0 -n 100 ./node_modules/.bin/tsc --noEmit --ignoreConfig

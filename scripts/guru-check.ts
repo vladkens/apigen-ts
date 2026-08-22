@@ -1,12 +1,40 @@
 import { enumerate, filterNullable } from "array-utils-ts"
+import { execFileSync } from "child_process"
 import fs from "fs/promises"
+import { createRequire } from "node:module"
 import { loadSchema } from "../src/generator"
-import { apigen } from "../src/main"
+import { apigen as localApigen } from "../src/main"
 
 const BaseDir = "./generated/guru"
+const Version = process.argv[2]
+const ClientDir = `${BaseDir}/clients/${encodeURIComponent(Version ?? "local")}`
 
 type GuruRec = { preferred: string; versions: Record<string, { swaggerUrl: string }> }
 type GuruRep = Record<string, GuruRec>
+type Apigen = typeof localApigen
+
+const loadApigen = async (): Promise<Apigen> => {
+  if (!Version) return localApigen
+
+  const dir = `${BaseDir}/runners/${encodeURIComponent(Version)}`
+  const pkg = JSON.parse(await fs.readFile("./package.json", "utf-8"))
+  const manifest = {
+    private: true,
+    dependencies: {
+      "apigen-ts": Version,
+      prettier: pkg.devDependencies.prettier,
+      typescript: pkg.devDependencies.typescript,
+    },
+  }
+
+  await fs.mkdir(dir, { recursive: true })
+  await fs.writeFile(`${dir}/package.json`, `${JSON.stringify(manifest, null, 2)}\n`)
+  await fs.writeFile(`${dir}/pnpm-workspace.yaml`, "packages: []\n")
+  execFileSync("pnpm", ["--dir", dir, "install", "--no-frozen-lockfile"], { stdio: "inherit" })
+
+  const require = createRequire(`${process.cwd()}/${dir}/package.json`)
+  return (require("apigen-ts") as { apigen: Apigen }).apigen
+}
 
 const loadSpecs = async () => {
   const rep = await fetch("https://api.apis.guru/v2/list.json")
@@ -37,8 +65,8 @@ const loadSpecs = async () => {
 }
 
 const generateClients = async () => {
-  await fs.rm(`${BaseDir}/clients`, { recursive: true, force: true })
-  await fs.mkdir(`${BaseDir}/clients`, { recursive: true })
+  if (!Version) await fs.rm(ClientDir, { recursive: true, force: true })
+  await fs.mkdir(ClientDir, { recursive: true })
 
   const allFiles = await fs.readdir(`${BaseDir}/specs`)
   const files = allFiles.filter((x) => x.endsWith(".json"))
@@ -46,13 +74,19 @@ const generateClients = async () => {
   const versions: Record<string, number> = {}
   const startTime = Date.now()
   const failed: number[] = []
+  let cached = 0
+  let generate: Apigen | undefined
 
   let debugId: number | undefined
   for (const [i, file] of enumerate(files, 1)) {
     if (debugId && i !== debugId) continue
 
     const src = await fs.realpath(`${BaseDir}/specs/${file}`)
-    const out = `${BaseDir}/clients/${file.replace(".json", ".ts")}`
+    const out = `${ClientDir}/${file.replace(".json", ".ts")}`
+    if (Version && (await fs.stat(out).catch(() => false))) {
+      cached++
+      continue
+    }
 
     const doc = JSON.parse(await fs.readFile(src, "utf-8"))
     const ver = (filterNullable([doc.openapi, doc.swagger, "0.0"])[0] as string).substring(0, 3)
@@ -62,7 +96,8 @@ const generateClients = async () => {
     const tag = `[${i.toString().padStart(len, " ")}/${files.length}] (${ver}) ${src}`
 
     try {
-      await apigen({ source: `file://${src}`, output: out, parseDates: true })
+      generate ??= await loadApigen()
+      await generate({ source: `file://${src}`, output: out, parseDates: true })
       console.log(`${tag} generated`)
     } catch (err) {
       console.log(tag, "failed", err)
@@ -73,19 +108,14 @@ const generateClients = async () => {
 
   console.log("\n\n")
   const dt = Date.now() - startTime
-  const fp = Object.values(versions).reduce((a, b) => a + b, 0)
-  console.log(`done in ${dt / 1000}s, ${(dt / fp).toFixed(0)}ms per file`)
-  console.log(`files: ${fp} failed: ${failed.length}`)
+  const processed = Object.values(versions).reduce((a, b) => a + b, 0)
+  console.log(`done in ${dt / 1000}s, ${processed ? (dt / processed).toFixed(0) : 0}ms per file`)
+  console.log(
+    `files: ${files.length} generated: ${processed - failed.length} cached: ${cached} failed: ${failed.length}`,
+  )
   // prettier-ignore
   console.log(`versions: ${Object.entries(versions).map((x) => x.join(" - ")).join(", ")}`)
   if (failed.length) console.log(`failed ids: ${failed.join(", ")}`)
-
-  // NODE_OPTIONS="--max-old-space-size=8192" npx tsc --noEmit ./generated/guru/clients/*.ts
-  // const cmd = `npx tsc --noEmit ${BaseDir}/clients/*.ts`
-  // const { stdout, stderr } = await util.promisify(exec)(cmd, {
-  //   env: { ...process.env, NODE_OPTIONS: "--max-old-space-size=8192" },
-  // })
-  // console.log(stdout, stderr)
 }
 
 const main = async () => {

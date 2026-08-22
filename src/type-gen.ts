@@ -19,7 +19,8 @@ const Keywords = new Set([
   // "abstract", "as", "async", "await", "constructor", "declare", "from", "get", "is", "module", 
   // "namespace", "of", "require", "set", "type",
   "Record", "Partial", "Pick", "Omit", "Exclude", "Extract", // ts keywords
-  "Date", "object", "Response" // ts type names
+  "Array", "Date", "File", "FormData", "Headers", "JSON", "Object", "Promise", "RequestInit",
+  "Response", "URL", "URLSearchParams", "fetch", "globalThis", "object" // runtime names
 ])
 
 export const normalizeIdentifier = (val: string, asVar = false) => {
