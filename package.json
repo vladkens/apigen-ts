@@ -31,7 +31,8 @@
     "array-utils-ts": "1.1.0",
     "cleye": "2.7.0",
     "lodash-es": "4.18.1",
-    "swagger2openapi": "7.0.8"
+    "swagger2openapi": "7.0.8",
+    "typescript": "6.0.3"
   },
   "devDependencies": {
     "@types/node": "26.6.6",
@@ -40,12 +41,10 @@
     "pkgroll": "2.29.0",
     "prettier": "3.9.10",
     "prettier-plugin-organize-imports": "4.3.0",
-    "tsx": "4.23.15",
-    "typescript": "6.0.3"
+    "tsx": "4.23.15"
   },
   "peerDependencies": {
-    "prettier": ">=3.0.0",
-    "typescript": ">=5.0.0"
+    "prettier": ">=3.0.0"
   },
   "files": [
     "dist"
