@@ -26,25 +26,32 @@ test("url template", async () => {
   equal(await t("/users/{id}", { abc }), "/users/{id}")
   equal(await t("/users/{id}/update", { abc }), "/users/{id}/update")
 
-  // should fill replacement if match
-  equal(await t("/{ver}", { ver: "ver" }), "/${ver}")
-  equal(await t("/{ver}/before", { ver: "ver" }), "/${ver}/before")
-  equal(await t("/users/{id}", { id: "id" }), "/users/${id}")
-  equal(await t("/users/{id}/update", { id: "id" }), "/users/${id}/update")
-  equal(await t("/users/{id}/update/{k}", { id: "id", k: "k" }), "/users/${id}/update/${k}")
-  equal(await t("/users/{id}/{id}", { id: "id" }), "/users/${id}/${id}")
-  equal(await t("/users/{id}/{id}/{ver}", { id: "id" }), "/users/${id}/${id}/{ver}")
+  // should fill (url-encoded) replacement if match
+  const e = (x: string) => "${encodeURIComponent(String(" + x + "))}"
+  equal(await t("/{ver}", { ver: "ver" }), `/${e("ver")}`)
+  equal(await t("/{ver}/before", { ver: "ver" }), `/${e("ver")}/before`)
+  equal(await t("/users/{id}", { id: "id" }), `/users/${e("id")}`)
+  equal(await t("/users/{id}/update", { id: "id" }), `/users/${e("id")}/update`)
+  equal(
+    await t("/users/{id}/update/{k}", { id: "id", k: "k" }),
+    `/users/${e("id")}/update/${e("k")}`,
+  )
+  equal(await t("/users/{id}/{id}", { id: "id" }), `/users/${e("id")}/${e("id")}`)
+  equal(await t("/users/{id}/{id}/{ver}", { id: "id" }), `/users/${e("id")}/${e("id")}/{ver}`)
 
   // should keep trailing slash
   equal(await t("/users/", {}), "/users/")
-  equal(await t("/users/{id}/", { id: "id" }), "/users/${id}/")
-  equal(await t("/users/{id}/update/", { id: "id" }), "/users/${id}/update/")
+  equal(await t("/users/{id}/", { id: "id" }), `/users/${e("id")}/`)
+  equal(await t("/users/{id}/update/", { id: "id" }), `/users/${e("id")}/update/`)
   equal(await t("/users/{id}/update/", {}), "/users/{id}/update/")
-  equal(await t("/users/{id}/{id}/{ver}/", { id: "id" }), "/users/${id}/${id}/{ver}/")
+  equal(await t("/users/{id}/{id}/{ver}/", { id: "id" }), `/users/${e("id")}/${e("id")}/{ver}/`)
 
   // should rename
-  equal(await t("/{ver}", { ver: "version" }), "/${version}")
-  equal(await t("/users/{id}/update", { id: "idx" }), "/users/${idx}/update")
-  equal(await t("/users/{id}/update/{id}", { id: "idx" }), "/users/${idx}/update/${idx}")
-  equal(await t("/users/{id}/u/{id}/{ver}", { id: "idx" }), "/users/${idx}/u/${idx}/{ver}")
+  equal(await t("/{ver}", { ver: "version" }), `/${e("version")}`)
+  equal(await t("/users/{id}/update", { id: "idx" }), `/users/${e("idx")}/update`)
+  equal(await t("/users/{id}/update/{id}", { id: "idx" }), `/users/${e("idx")}/update/${e("idx")}`)
+  equal(
+    await t("/users/{id}/u/{id}/{ver}", { id: "idx" }),
+    `/users/${e("idx")}/u/${e("idx")}/{ver}`,
+  )
 })

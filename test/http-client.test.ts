@@ -114,3 +114,86 @@ test("apiClient emits uppercase HTTP methods", async () => {
     globalThis.fetch = prevFetch
   }
 })
+
+test("apiClient serializes query, path and form params", async () => {
+  const array = { type: "array", items: { type: "string" } }
+  const schema = {
+    openapi: "3.1.0",
+    info: { title: "Test", version: "1.0.0" },
+    paths: {
+      "/items": {
+        get: {
+          tags: ["items"],
+          operationId: "listItems",
+          parameters: [
+            { name: "status", in: "query", schema: { type: "string" } },
+            { name: "tags", in: "query", schema: array },
+            { name: "ids", in: "query", schema: array, explode: false },
+            { name: "page-ids", in: "query", schema: array, explode: false },
+            { name: "pipes", in: "query", schema: array, style: "pipeDelimited" },
+          ],
+          responses: { "200": { description: "ok" } },
+        },
+        post: {
+          tags: ["items"],
+          operationId: "createItem",
+          requestBody: {
+            content: {
+              "application/x-www-form-urlencoded": {
+                schema: {
+                  type: "object",
+                  properties: { name: { type: "string" }, note: { type: "string" } },
+                },
+              },
+            },
+          },
+          responses: { "200": { description: "ok" } },
+        },
+      },
+      "/users/{username}": {
+        get: {
+          tags: ["users"],
+          operationId: "getUser",
+          parameters: [
+            { name: "username", in: "path", required: true, schema: { type: "string" } },
+          ],
+          responses: { "200": { description: "ok" } },
+        },
+      },
+    },
+  }
+
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "apigen-ts-"))
+  const source = path.join(dir, "openapi.json")
+  const output = path.join(dir, "client.ts")
+  const prevFetch = globalThis.fetch
+  const seen: string[] = []
+
+  await fs.writeFile(source, JSON.stringify(schema))
+  await apigen({ source: pathToFileURL(source).href, output })
+
+  globalThis.fetch = async (url, options) => {
+    seen.push(options?.body ? `${url} ${options.body}` : `${url}`)
+    return new Response("{}")
+  }
+
+  try {
+    const { ApiClient: Client } = await import(pathToFileURL(output).href)
+    const api = new Client({ baseUrl: "http://localhost" })
+    await api.items.listItems({ status: undefined })
+    await api.items.listItems({ status: null })
+    await api.items.listItems({ tags: ["a", "b,c"] })
+    await api.items.listItems({ ids: ["a", "b"], "page-ids": ["c", "d"], pipes: ["e", "f"] })
+    await api.items.createItem({ name: "a", note: undefined })
+    await api.users.getUser("a/b?c#d")
+
+    equal(seen[0], "http://localhost/items")
+    equal(seen[1], "http://localhost/items")
+    equal(seen[2], "http://localhost/items?tags=a&tags=b%2Cc")
+    equal(seen[3], "http://localhost/items?ids=a%2Cb&page-ids=c%2Cd&pipes=e%7Cf")
+    equal(seen[4], "http://localhost/items name=a")
+    equal(seen[5], "http://localhost/users/a%2Fb%3Fc%23d")
+  } finally {
+    globalThis.fetch = prevFetch
+  }
+})

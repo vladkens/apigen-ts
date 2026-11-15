@@ -2,6 +2,7 @@ import {
   BaseResolver,
   createConfig,
   Oas3Definition,
+  Oas3Parameter,
   Oas3PathItem,
   bundle as redoclyBundle,
   Referenced,
@@ -90,12 +91,45 @@ export const prepareUrl = (url: string, rename: Record<string, string>) => {
     parts.slice(1).map((x, i) => {
       const [name, ...rest] = x.split("}")
       const right = rest.join("}")
+      // encodeURIComponent(String(x)) keeps "${x}" stringification, but escapes "/", "?", "#"
+      const value = f.createCallExpression(f.createIdentifier("encodeURIComponent"), undefined, [
+        f.createCallExpression(f.createIdentifier("String"), undefined, [f.createIdentifier(name)]),
+      ])
       return f.createTemplateSpan(
-        f.createIdentifier(name), // no normalization required
+        value,
         i === parts.length - 2 ? f.createTemplateTail(right) : f.createTemplateMiddle(right),
       )
     }),
   )
+}
+
+// client repeats keys for query arrays (OpenAPI default: form + explode), so non-exploded
+// arrays are joined here, eg. Swagger 2 `collectionFormat: csv` which is its default
+const prepareSearch = (ctx: Context, params: Oas3Parameter[]) => {
+  const separators: Record<string, string> = { form: ",", spaceDelimited: " ", pipeDelimited: "|" }
+
+  const joined = params.flatMap((x) => {
+    const style = x.style ?? "form"
+    const schema = unref(ctx, x.schema)
+    const isArray = isObject(schema) && "type" in schema && [schema.type].flat().includes("array")
+    if (!isArray || (x.explode ?? style === "form") || !(style in separators)) return []
+
+    const key = /^[a-zA-Z_$][\w$]*$/.test(x.name)
+      ? f.createPropertyAccessExpression(f.createIdentifier("search"), x.name)
+      : f.createElementAccessExpression(f.createIdentifier("search"), f.createStringLiteral(x.name))
+
+    const token = f.createToken(ts.SyntaxKind.QuestionDotToken)
+    const join = f.createPropertyAccessChain(key, token, "join")
+    const value = f.createCallChain(join, undefined, undefined, [
+      f.createStringLiteral(separators[style]),
+    ])
+    return [f.createPropertyAssignment(f.createStringLiteral(x.name), value)]
+  })
+
+  if (!joined.length) return f.createShorthandPropertyAssignment("search")
+
+  const search = [f.createSpreadAssignment(f.createIdentifier("search")), ...joined]
+  return f.createPropertyAssignment("search", f.createObjectLiteralExpression(search))
 }
 
 const prepareOp = (ctx: Context, cfg: OpConfig, opName: string, httpMethod: string) => {
@@ -144,7 +178,7 @@ const prepareOp = (ctx: Context, cfg: OpConfig, opName: string, httpMethod: stri
 
   const cbArgs = filterNullable([
     ctx.fetchOptions ? f.createSpreadAssignment(f.createIdentifier("opts")) : undefined,
-    search.length ? f.createShorthandPropertyAssignment("search") : undefined,
+    search.length ? prepareSearch(ctx, search) : undefined,
     reqSchema && f.createShorthandPropertyAssignment("body"),
     reqSchema && reqSchema[0] !== "application/json"
       ? f.createPropertyAssignment(

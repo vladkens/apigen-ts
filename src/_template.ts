@@ -57,8 +57,11 @@ export class ApiClient {
   async Fetch<T>(method: string, path: string, opts: ApigenRequest = {}): Promise<T> {
     const url = this.PrepareFetchUrl(path)
 
+    // skip omitted values; arrays repeat the key per item (OpenAPI default: form + explode)
     for (const [k, v] of Object.entries(opts?.search ?? {})) {
-      url.searchParams.append(k, Array.isArray(v) ? v.join(",") : (v as string))
+      for (const x of Array.isArray(v) ? v : [v]) {
+        if (x !== undefined && x !== null) url.searchParams.append(k, x as string)
+      }
     }
 
     const configHeaders =
@@ -76,7 +79,7 @@ export class ApiClient {
       headers.delete("content-type")
       body = ct === "multipart/form-data" ? new FormData() : new URLSearchParams()
       for (const [k, v] of Object.entries(opts.body as Record<string, string>)) {
-        body.append(k, v)
+        if (v !== undefined && v !== null) body.append(k, v)
       }
     }
 
