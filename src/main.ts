@@ -12,7 +12,7 @@ export const apigen = async (config: Partial<Config> & Pick<Config, "source" | "
     ...(config.headers ? { headers: config.headers } : {}),
   })
   const ctx = initCtx({ ...config, doc })
-  const { modules, types } = await generateAst(ctx)
+  const { modules, types, dates } = await generateAst(ctx)
 
   const filepath = join(dirname(fileURLToPath(import.meta.url)), "_template.ts")
   const file = await fs.readFile(filepath, "utf-8")
@@ -24,10 +24,14 @@ export const apigen = async (config: Partial<Config> & Pick<Config, "source" | "
     ...file.split("\n").filter((x) => !/\s*\/\/\s(?!apigen:)/.test(x)),
   ].join("\n")
 
-  if (!ctx.parseDates) {
-    code = code.replace(/\s*ISO_FORMAT\s=.+$/gm, "")
-    code = code.replace(/PopulateDates.+?\n\s{2}\}/s, "")
-    code = code.replace(/this.PopulateDates\((.+)\)/, "$1")
+  // date parsing is kept only when some response has date-time fields
+  const datesBlock = /^[ \t]*\/\/ apigen:dates-start\n([\s\S]*?)^[ \t]*\/\/ apigen:dates-end\n/gm
+  code = code.replace(datesBlock, dates ? "$1" : "")
+  if (dates) {
+    const shapes = Object.entries(dates).map(
+      ([k, v]) => `${JSON.stringify(k)}: ${JSON.stringify(v)},`,
+    )
+    code = code.replace("// apigen:date-shapes", shapes.join("\n"))
   }
 
   // broken type by design, need to keep original formatting (ts still can print it)

@@ -12,23 +12,31 @@ export interface ApigenConfig {
 export interface ApigenRequest extends Omit<RequestInit, "body"> {
   search?: Record<string, unknown>
   body?: unknown
+  dates?: ApigenDates
 }
 
+export type ApigenDates = true | string | ApigenDates[] | { [key: string]: ApigenDates }
+
 export class ApiClient {
-  ISO_FORMAT = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d*)?(?:[-+]\d{2}:?\d{2}|Z)?$/
   Config: ApigenConfig
+  DateShapes: Record<string, ApigenDates> = {
+    Order: { shipDate: true },
+  }
 
   constructor(config?: Partial<ApigenConfig>) {
     this.Config = { baseUrl: "/", headers: {}, ...config }
   }
 
-  PopulateDates<T>(d: T): T {
-    if (d === null || d === undefined || typeof d !== "object") return d
+  PopulateDates(d: unknown, s?: ApigenDates): unknown {
+    if (s === true) return typeof d === "string" ? new Date(d) : d
+    if (typeof s === "string") return this.PopulateDates(d, this.DateShapes[s])
+    if (Array.isArray(s)) return s.reduce((acc, x) => this.PopulateDates(acc, x), d)
+    if (s === undefined || d === null || typeof d !== "object") return d
 
-    const t = d as unknown as Record<string, unknown>
+    const t = d as Record<string, unknown>
     for (const [k, v] of Object.entries(t)) {
-      if (typeof v === "string" && this.ISO_FORMAT.test(v)) t[k] = new Date(v)
-      else if (typeof v === "object") this.PopulateDates(v)
+      const x = Object.prototype.hasOwnProperty.call(s, k) ? s[k] : s["*"]
+      if (x !== undefined) t[k] = this.PopulateDates(v, x)
     }
 
     return d
@@ -52,12 +60,16 @@ export class ApiClient {
     return new URL(path, base)
   }
 
+  FormatParam(v: unknown) {
+    return v instanceof Date ? v.toISOString() : v
+  }
+
   EncodePathParam(v: unknown) {
-    return encodeURIComponent(String(v))
+    return encodeURIComponent(String(this.FormatParam(v)))
   }
 
   JoinQueryParam(v: unknown, sep: string) {
-    return Array.isArray(v) ? v.join(sep) : v
+    return Array.isArray(v) ? v.map((x) => this.FormatParam(x)).join(sep) : v
   }
 
   async Fetch<T>(method: string, path: string, opts: ApigenRequest = {}): Promise<T> {
@@ -65,7 +77,7 @@ export class ApiClient {
 
     for (const [k, v] of Object.entries(opts?.search ?? {})) {
       for (const x of Array.isArray(v) ? v : [v]) {
-        if (x !== undefined && x !== null) url.searchParams.append(k, x as string)
+        if (x !== undefined && x !== null) url.searchParams.append(k, this.FormatParam(x) as string)
       }
     }
 
@@ -83,7 +95,7 @@ export class ApiClient {
       headers.delete("content-type")
       body = ct === "multipart/form-data" ? new FormData() : new URLSearchParams()
       for (const [k, v] of Object.entries(opts.body as Record<string, string>)) {
-        if (v !== undefined && v !== null) body.append(k, v)
+        if (v !== undefined && v !== null) body.append(k, this.FormatParam(v) as string)
       }
     }
 
@@ -98,7 +110,8 @@ export class ApiClient {
 
     const rs = await rep.text()
     try {
-      return this.PopulateDates(JSON.parse(rs) as T)
+      if (opts.dates) return this.PopulateDates(JSON.parse(rs), opts.dates) as T
+      return JSON.parse(rs) as T
     } catch (e) {
       return rs as unknown as T
     }
@@ -157,11 +170,13 @@ export class ApiClient {
     },
 
     placeOrder: (body: Order) => {
-      return this.Fetch<Order>("POST", "/store/order", { body })
+      return this.Fetch<Order>("POST", "/store/order", { body, dates: "Order" })
     },
 
     getOrderById: (orderId: number) => {
-      return this.Fetch<Order>("GET", `/store/order/${this.EncodePathParam(orderId)}`, {})
+      return this.Fetch<Order>("GET", `/store/order/${this.EncodePathParam(orderId)}`, {
+        dates: "Order",
+      })
     },
 
     deleteOrder: (orderId: number) => {

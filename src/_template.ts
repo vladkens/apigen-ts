@@ -11,27 +11,46 @@ export interface ApigenConfig {
 export interface ApigenRequest extends Omit<RequestInit, "body"> {
   search?: Record<string, unknown>
   body?: unknown
+  // apigen:dates-start
+  dates?: ApigenDates
+  // apigen:dates-end
 }
 
+// apigen:dates-start
+// where a response has date-time strings: true is a date, a string names a shape in DateShapes,
+// an array applies every shape in it (oneOf, anyOf, allOf), an object maps keys ("*" for the rest)
+export type ApigenDates = true | string | ApigenDates[] | { [key: string]: ApigenDates }
+// apigen:dates-end
+
 export class ApiClient {
-  ISO_FORMAT = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d*)?(?:[-+]\d{2}:?\d{2}|Z)?$/
   Config: ApigenConfig
+  // apigen:dates-start
+  DateShapes: Record<string, ApigenDates> = {
+    // apigen:date-shapes
+  }
+  // apigen:dates-end
 
   constructor(config?: Partial<ApigenConfig>) {
     this.Config = { baseUrl: "/", headers: {}, ...config }
   }
 
-  PopulateDates<T>(d: T): T {
-    if (d === null || d === undefined || typeof d !== "object") return d
+  // apigen:dates-start
+  // turns date-time strings into Date objects where the schema has them, see ApigenDates
+  PopulateDates(d: unknown, s?: ApigenDates): unknown {
+    if (s === true) return typeof d === "string" ? new Date(d) : d
+    if (typeof s === "string") return this.PopulateDates(d, this.DateShapes[s])
+    if (Array.isArray(s)) return s.reduce((acc, x) => this.PopulateDates(acc, x), d)
+    if (s === undefined || d === null || typeof d !== "object") return d
 
-    const t = d as unknown as Record<string, unknown>
+    const t = d as Record<string, unknown>
     for (const [k, v] of Object.entries(t)) {
-      if (typeof v === "string" && this.ISO_FORMAT.test(v)) t[k] = new Date(v)
-      else if (typeof v === "object") this.PopulateDates(v)
+      const x = Object.prototype.hasOwnProperty.call(s, k) ? s[k] : s["*"]
+      if (x !== undefined) t[k] = this.PopulateDates(v, x)
     }
 
     return d
   }
+  // apigen:dates-end
 
   async ParseError(rep: Response) {
     try {
@@ -54,14 +73,19 @@ export class ApiClient {
     return new URL(path, base)
   }
 
+  // Date values in path, query and form params are sent as ISO strings
+  FormatParam(v: unknown) {
+    return v instanceof Date ? v.toISOString() : v
+  }
+
   // same as "${v}" in path template, but keeps "/", "?", "#" inside the path segment
   EncodePathParam(v: unknown) {
-    return encodeURIComponent(String(v))
+    return encodeURIComponent(String(this.FormatParam(v)))
   }
 
   // query params with explode: false, eg. Swagger 2 `collectionFormat: csv`
   JoinQueryParam(v: unknown, sep: string) {
-    return Array.isArray(v) ? v.join(sep) : v
+    return Array.isArray(v) ? v.map((x) => this.FormatParam(x)).join(sep) : v
   }
 
   async Fetch<T>(method: string, path: string, opts: ApigenRequest = {}): Promise<T> {
@@ -70,7 +94,7 @@ export class ApiClient {
     // skip omitted values; arrays repeat the key per item (OpenAPI default: form + explode)
     for (const [k, v] of Object.entries(opts?.search ?? {})) {
       for (const x of Array.isArray(v) ? v : [v]) {
-        if (x !== undefined && x !== null) url.searchParams.append(k, x as string)
+        if (x !== undefined && x !== null) url.searchParams.append(k, this.FormatParam(x) as string)
       }
     }
 
@@ -89,7 +113,7 @@ export class ApiClient {
       headers.delete("content-type")
       body = ct === "multipart/form-data" ? new FormData() : new URLSearchParams()
       for (const [k, v] of Object.entries(opts.body as Record<string, string>)) {
-        if (v !== undefined && v !== null) body.append(k, v)
+        if (v !== undefined && v !== null) body.append(k, this.FormatParam(v) as string)
       }
     }
 
@@ -104,7 +128,10 @@ export class ApiClient {
 
     const rs = await rep.text()
     try {
-      return this.PopulateDates(JSON.parse(rs) as T)
+      // apigen:dates-start
+      if (opts.dates) return this.PopulateDates(JSON.parse(rs), opts.dates) as T
+      // apigen:dates-end
+      return JSON.parse(rs) as T
     } catch (e) {
       return rs as unknown as T
     }
