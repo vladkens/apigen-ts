@@ -41,7 +41,7 @@ run-ts-%:
 	@echo "-- run $* --------------------"
 	@docker run apigen_ts$*
 
-test-matrix:
+test-matrix: examples
 	@$(MAKE) -j$(words $(TS_VERSIONS)) $(addprefix build-ts-,$(TS_VERSIONS))
 	@$(MAKE) $(addprefix run-ts-,$(TS_VERSIONS))
 

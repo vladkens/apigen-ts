@@ -18,15 +18,15 @@
 
 ```sh
 pnpm add -D apigen-ts
-pnpm apigen-ts https://petstore3.swagger.io/api/v3/openapi.json ./api-client.ts
+pnpm apigen-ts ./openapi.yaml ./api-client.ts
 ```
 
 ```ts
 import { ApiClient } from "./api-client"
 
-const api = new ApiClient({ baseUrl: "https://petstore3.swagger.io/api/v3" })
+const api = new ApiClient({ baseUrl: "https://api.example.com" })
 
-const pet = await api.pet.getPetById(1) // → Pet
+const pet = await api.pet.getPetById(1) // GET https://api.example.com/pet/1 → Pet
 const sold = await api.pet.findPetsByStatus({ status: "sold" }) // → Pet[]
 await api.pet.updatePet({ ...pet, status: "sold" })
 ```
