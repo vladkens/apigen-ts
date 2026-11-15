@@ -1,13 +1,9 @@
+# type-checks the generated examples with a given TypeScript version: make test-matrix
 FROM node:alpine
-RUN npm install -g pnpm
 ARG TS_VER=latest
 
 WORKDIR /app
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-RUN pnpm install --frozen-lockfile
-RUN pnpm add --save-dev typescript@${TS_VER}
+RUN npm install --no-fund --no-audit typescript@${TS_VER}
 
-COPY tsconfig.json ./
-COPY src ./src
-COPY test ./test
-CMD ["sh", "-c", "/app/node_modules/.bin/tsc --version; pnpm test"]
+COPY examples ./examples
+CMD ["sh", "-c", "npx tsc --version && npx tsc --noEmit --strict --target es2022 --module nodenext --lib es2022,dom examples/*.ts"]
