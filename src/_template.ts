@@ -37,7 +37,8 @@ export class ApiClient {
   // apigen:dates-start
   // turns date-time strings into Date objects where the schema has them, see ApigenDates
   PopulateDates(d: unknown, s?: ApigenDates): unknown {
-    if (s === true) return typeof d === "string" ? new Date(d) : d
+    // strings that are not dates stay, eg. "pending" for oneOf: [date-time, enum: [pending]]
+    if (s === true) return typeof d === "string" && !isNaN(Date.parse(d)) ? new Date(d) : d
     if (typeof s === "string") return this.PopulateDates(d, this.DateShapes[s])
     if (Array.isArray(s)) return s.reduce((acc, x) => this.PopulateDates(acc, x), d)
     if (s === undefined || d === null || typeof d !== "object") return d

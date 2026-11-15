@@ -35,6 +35,7 @@ test("apiClient dates parsing", async () => {
   equal(rs.text as unknown, dateStr) // not a date in the schema
 
   equal(((await t(date, true)) as Date).toISOString(), dateStr)
+  equal(await t("pending", true), "pending") // eg. oneOf: [date-time, enum: [pending]]
   equal(await t(date, [{ at: true }, "More"]), dateStr) // a shape for objects keeps strings
 })
 
