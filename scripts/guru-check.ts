@@ -23,7 +23,7 @@ const loadApigen = async (): Promise<Apigen> => {
     dependencies: {
       "apigen-ts": Version,
       prettier: pkg.devDependencies.prettier,
-      typescript: pkg.devDependencies.typescript,
+      typescript: pkg.dependencies.typescript,
     },
   }
 

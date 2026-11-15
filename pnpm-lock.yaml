@@ -29,6 +29,9 @@ importers:
       swagger2openapi:
         specifier: 7.0.8
         version: 7.0.8
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
     devDependencies:
       '@types/node':
         specifier: 26.6.6
@@ -51,9 +54,6 @@ importers:
       tsx:
         specifier: 4.23.15
         version: 4.23.15
-      typescript:
-        specifier: 6.0.3
-        version: 6.0.3
 
 packages:
 

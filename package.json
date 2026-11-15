@@ -1,22 +1,27 @@
 {
   "type": "module",
   "name": "apigen-ts",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "license": "MIT",
   "author": "vladkens <v.pronsky@gmail.com>",
   "repository": "vladkens/apigen-ts",
-  "description": "Simple typed OpenAPI client generator",
+  "description": "Generate a typed TypeScript client from OpenAPI or Swagger in one file: a method per endpoint, plain fetch, no runtime dependencies.",
   "keywords": [
     "openapi",
     "swagger",
     "typescript",
-    "api",
+    "api-client",
+    "client",
+    "sdk",
+    "fetch",
     "generator",
-    "codegen"
+    "codegen",
+    "openapi3",
+    "swagger2"
   ],
   "scripts": {
     "build": "rm -rf dist && pkgroll && cp ./src/_template.ts ./dist && ls -lah dist",
-    "test": "tsx --test --test-reporter=dot test/*.test.ts",
+    "test": "tsx --test test/*.test.ts",
     "test-cov": "tsx --experimental-test-coverage --test test/*.test.ts",
     "format": "prettier --write --log-level warn ."
   },
@@ -31,7 +36,8 @@
     "array-utils-ts": "1.1.0",
     "cleye": "2.7.0",
     "lodash-es": "4.18.1",
-    "swagger2openapi": "7.0.8"
+    "swagger2openapi": "7.0.8",
+    "typescript": "6.0.3"
   },
   "devDependencies": {
     "@types/node": "26.6.6",
@@ -40,12 +46,10 @@
     "pkgroll": "2.29.0",
     "prettier": "3.9.10",
     "prettier-plugin-organize-imports": "4.3.0",
-    "tsx": "4.23.15",
-    "typescript": "6.0.3"
+    "tsx": "4.23.15"
   },
   "peerDependencies": {
-    "prettier": ">=3.0.0",
-    "typescript": ">=5.0.0"
+    "prettier": ">=3.0.0"
   },
   "files": [
     "dist"

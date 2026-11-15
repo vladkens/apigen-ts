@@ -31,7 +31,7 @@ clean:
 	docker images --format "{{.Repository}}:{{.Tag}}" | grep "^apigen_ts" | xargs -r docker rmi --force
 
 .PHONY: test-matrix
-TS_VERSIONS := 5.0 5.1 5.2 5.3 5.4 5.5 5.6 5.7 5.8 5.9 6.0
+TS_VERSIONS := 5.0 5.1 5.2 5.3 5.4 5.5 5.6 5.7 5.8 5.9 6.0 7.0
 
 build-ts-%:
 	@echo "-- build $* --------------------"
@@ -41,7 +41,7 @@ run-ts-%:
 	@echo "-- run $* --------------------"
 	@docker run apigen_ts$*
 
-test-matrix:
+test-matrix: examples
 	@$(MAKE) -j$(words $(TS_VERSIONS)) $(addprefix build-ts-,$(TS_VERSIONS))
 	@$(MAKE) $(addprefix run-ts-,$(TS_VERSIONS))
 
