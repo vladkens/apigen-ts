@@ -21,7 +21,7 @@
   ],
   "scripts": {
     "build": "rm -rf dist && pkgroll && cp ./src/_template.ts ./dist && ls -lah dist",
-    "test": "tsx --test --test-reporter=dot test/*.test.ts",
+    "test": "tsx --test test/*.test.ts",
     "test-cov": "tsx --experimental-test-coverage --test test/*.test.ts",
     "format": "prettier --write --log-level warn ."
   },
