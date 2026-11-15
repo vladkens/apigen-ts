@@ -33,12 +33,16 @@ const HttpMethods = [
 
 const normalizeOpName = (val: string) => {
   const articles = new Set(["a", "an", "the"])
-  const tmp = val
+  const words = val
     .replace(/'/, "") // case when plain text: User's -> Users
     .replace(/[^a-zA-Z0-9]/g, "_")
     .split("_")
-    .filter((x) => x !== "" && !articles.has(x))
-    .map((x) => upperFirst(x) as string)
+    .filter((x) => x !== "")
+
+  // keep articles when there is nothing else, eg. tag "a"
+  const named = words.filter((x) => !articles.has(x))
+  const tmp = (named.length ? named : words).map((x) => upperFirst(x) as string)
+  if (!tmp.length) return "" // no latin letters or digits, eg. Cyrillic tag
 
   // eg: SSHKey -> sshKey
   tmp[0] = tmp[0].toUpperCase() === tmp[0] ? tmp[0].toLowerCase() : lowerFirst(tmp[0])
@@ -46,16 +50,14 @@ const normalizeOpName = (val: string) => {
 }
 
 export const getOpName = (ctx: Context, op: OpConfig) => {
-  let ns = normalizeOpName(filterEmpty(op.tags ?? [])[0] ?? "general")
-  let fn = op.operationId ?? null
+  let ns = normalizeOpName(filterEmpty(op.tags ?? [])[0] ?? "") || "general"
+  let fn = normalizeOpName(op.operationId ?? "")
 
-  // if not opId, try to make it from path
+  // if not opId (or nothing left of it), try to make it from path
   if (!fn) {
     fn = op.path.replace(/^(\/api)?(\/v?\d\.?\d?)?\/(.+)$/, "$3") // /api/v1.0/users -> /users
-    fn = `${op.method}/${fn}`.replace(/\/+/, "/")
+    fn = normalizeOpName(`${op.method}/${fn}`.replace(/\/+/, "/"))
   }
-
-  fn = normalizeOpName(fn)
 
   // prettier-ignore
   // https://stackoverflow.com/a/58818125/3664464
