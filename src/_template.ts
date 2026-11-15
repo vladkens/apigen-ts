@@ -54,6 +54,16 @@ export class ApiClient {
     return new URL(path, base)
   }
 
+  // same as "${v}" in path template, but keeps "/", "?", "#" inside the path segment
+  EncodePathParam(v: unknown) {
+    return encodeURIComponent(String(v))
+  }
+
+  // query params with explode: false, eg. Swagger 2 `collectionFormat: csv`
+  JoinQueryParam(v: unknown, sep: string) {
+    return Array.isArray(v) ? v.join(sep) : v
+  }
+
   async Fetch<T>(method: string, path: string, opts: ApigenRequest = {}): Promise<T> {
     const url = this.PrepareFetchUrl(path)
 

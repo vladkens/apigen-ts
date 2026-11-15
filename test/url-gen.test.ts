@@ -27,7 +27,7 @@ test("url template", async () => {
   equal(await t("/users/{id}/update", { abc }), "/users/{id}/update")
 
   // should fill (url-encoded) replacement if match
-  const e = (x: string) => "${encodeURIComponent(String(" + x + "))}"
+  const e = (x: string) => "${this.EncodePathParam(" + x + ")}"
   equal(await t("/{ver}", { ver: "ver" }), `/${e("ver")}`)
   equal(await t("/{ver}/before", { ver: "ver" }), `/${e("ver")}/before`)
   equal(await t("/users/{id}", { id: "id" }), `/users/${e("id")}`)

@@ -52,6 +52,14 @@ export class ApiClient {
     return new URL(path, base)
   }
 
+  EncodePathParam(v: unknown) {
+    return encodeURIComponent(String(v))
+  }
+
+  JoinQueryParam(v: unknown, sep: string) {
+    return Array.isArray(v) ? v.join(sep) : v
+  }
+
   async Fetch<T>(method: string, path: string, opts: ApigenRequest = {}): Promise<T> {
     const url = this.PrepareFetchUrl(path)
 
@@ -104,11 +112,10 @@ export class ApiClient {
         file?: File
       },
     ) => {
-      return this.Fetch<ApiResponse>(
-        "POST",
-        `/pet/${encodeURIComponent(String(petId))}/uploadImage`,
-        { body, headers: { "content-type": "multipart/form-data" } },
-      )
+      return this.Fetch<ApiResponse>("POST", `/pet/${this.EncodePathParam(petId)}/uploadImage`, {
+        body,
+        headers: { "content-type": "multipart/form-data" },
+      })
     },
 
     addPet: (body: Pet) => {
@@ -128,7 +135,7 @@ export class ApiClient {
     },
 
     getPetById: (petId: number) => {
-      return this.Fetch<Pet>("GET", `/pet/${encodeURIComponent(String(petId))}`, {})
+      return this.Fetch<Pet>("GET", `/pet/${this.EncodePathParam(petId)}`, {})
     },
 
     updatePetWithForm: (
@@ -138,14 +145,14 @@ export class ApiClient {
         status?: string
       },
     ) => {
-      return this.Fetch<void>("POST", `/pet/${encodeURIComponent(String(petId))}`, {
+      return this.Fetch<void>("POST", `/pet/${this.EncodePathParam(petId)}`, {
         body,
         headers: { "content-type": "application/x-www-form-urlencoded" },
       })
     },
 
     deletePet: (petId: number) => {
-      return this.Fetch<void>("DELETE", `/pet/${encodeURIComponent(String(petId))}`, {})
+      return this.Fetch<void>("DELETE", `/pet/${this.EncodePathParam(petId)}`, {})
     },
   }
 
@@ -159,11 +166,11 @@ export class ApiClient {
     },
 
     getOrderById: (orderId: number) => {
-      return this.Fetch<Order>("GET", `/store/order/${encodeURIComponent(String(orderId))}`, {})
+      return this.Fetch<Order>("GET", `/store/order/${this.EncodePathParam(orderId)}`, {})
     },
 
     deleteOrder: (orderId: number) => {
-      return this.Fetch<void>("DELETE", `/store/order/${encodeURIComponent(String(orderId))}`, {})
+      return this.Fetch<void>("DELETE", `/store/order/${this.EncodePathParam(orderId)}`, {})
     },
   }
 
@@ -173,15 +180,15 @@ export class ApiClient {
     },
 
     getUserByName: (username: string) => {
-      return this.Fetch<User>("GET", `/user/${encodeURIComponent(String(username))}`, {})
+      return this.Fetch<User>("GET", `/user/${this.EncodePathParam(username)}`, {})
     },
 
     updateUser: (username: string, body: User) => {
-      return this.Fetch<void>("PUT", `/user/${encodeURIComponent(String(username))}`, { body })
+      return this.Fetch<void>("PUT", `/user/${this.EncodePathParam(username)}`, { body })
     },
 
     deleteUser: (username: string) => {
-      return this.Fetch<void>("DELETE", `/user/${encodeURIComponent(String(username))}`, {})
+      return this.Fetch<void>("DELETE", `/user/${this.EncodePathParam(username)}`, {})
     },
 
     loginUser: (search: { username?: string; password?: string }) => {
