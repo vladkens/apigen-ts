@@ -47,6 +47,12 @@ test("type inline", async () => {
   t({ type: ["string", "null"] }, "string | null")
   t({ type: ["number", "null"] }, "number | null")
   t({ type: ["date", "null"] }, "unknown") // just unknown
+  t({ type: ["string", "null"], format: "date-time" }, "string | null")
+  t({ type: ["string", "null"], format: "date-time" }, "Date | null", { parseDates: true })
+  t({ type: ["string", "null"], format: "binary" }, "File | null")
+  t({ type: ["array", "null"], items: { type: "string" } }, "string[] | null")
+  t({ type: ["string", "null"], enum: ["a", null] }, "string | null")
+  t({ type: ["string", "number"], const: "a" }, "string | number")
 
   // combinations
   t({ oneOf: [{ type: "string" }, { type: "number" }] }, "string | number")

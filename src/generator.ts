@@ -13,7 +13,7 @@ import { convertObj } from "swagger2openapi"
 import ts from "typescript"
 import { Context, OpConfig, OpName } from "./config"
 import { getRepSchema, getReqSchema, OAS3, unref } from "./schema"
-import { makeType, makeTypeAlias, normalizeIdentifier } from "./type-gen"
+import { makeDates, makeType, makeTypeAlias, normalizeIdentifier } from "./type-gen"
 
 const f = ts.factory
 type Routes = Record<string, ts.PropertyAssignment[]>
@@ -174,6 +174,9 @@ const prepareOp = (ctx: Context, cfg: OpConfig, opName: string, httpMethod: stri
     )
   }
 
+  const dates = makeDates(ctx, repSchema)
+  if (dates !== undefined) ctx.usesDates = true
+
   const cbArgs = filterNullable([
     ctx.fetchOptions ? f.createSpreadAssignment(f.createIdentifier("opts")) : undefined,
     search.length ? prepareSearch(search) : undefined,
@@ -188,6 +191,9 @@ const prepareOp = (ctx: Context, cfg: OpConfig, opName: string, httpMethod: stri
             ),
           ]),
         )
+      : undefined,
+    dates !== undefined
+      ? f.createPropertyAssignment("dates", f.createIdentifier(JSON.stringify(dates)))
       : undefined,
   ])
 
@@ -309,7 +315,22 @@ const prepareTypes = async (ctx: Context) => {
   return types
 }
 
+// named schemas with date-time fields, also through refs to other named schemas
+const prepareDates = (ctx: Context) => {
+  const schemas = Object.entries(ctx.doc.components?.schemas ?? {})
+
+  // a ref counts only when its schema has dates, so repeat until no new names come
+  for (let size = -1; size !== ctx.dateShapes.size;) {
+    size = ctx.dateShapes.size
+    for (const [name, config] of schemas) {
+      const shape = makeDates(ctx, config)
+      if (shape !== undefined) ctx.dateShapes.set(normalizeIdentifier(name, true), shape)
+    }
+  }
+}
+
 export const generateAst = async (ctx: Context) => {
+  prepareDates(ctx)
   const types = await prepareTypes(ctx)
   const routes = await prepareRoutes(ctx)
   const modules: ts.PropertyDeclaration[] = []
@@ -317,7 +338,10 @@ export const generateAst = async (ctx: Context) => {
     modules.push(prepareNs(ctx, k, v))
   }
 
-  return { modules, types }
+  const dates = ctx.usesDates
+    ? Object.fromEntries(sortBy([...ctx.dateShapes], ([k]) => k))
+    : undefined
+  return { modules, types, dates }
 }
 
 export const loadSchema = async ({

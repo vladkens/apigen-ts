@@ -1,7 +1,8 @@
 import type { Oas3Schema, Oas3_1Schema, Referenced } from "@redocly/openapi-core"
 import { filterEmpty } from "array-utils-ts"
-import { isArray, isBoolean, uniq, upperFirst } from "lodash-es"
+import { isArray, isBoolean, isEqual, omit, uniq, uniqWith, upperFirst } from "lodash-es"
 import ts from "typescript"
+import type { ApigenDates } from "./_template"
 import { Context } from "./config"
 import { OAS3, unref } from "./schema"
 
@@ -101,8 +102,16 @@ const makeObject = (ctx: Context, s: OAS3): ts.TypeNode => {
   return f.createKeywordTypeNode(ts.SyntaxKind.ObjectKeyword)
 }
 
-const makeLiteralUnion = (ctx: Context, types: string[]): ts.TypeNode => {
-  const tokens = types.map((x) => makeType(ctx, { type: x }))
+// type: ["string", "null"] is the schema once per type, eg. format: date-time -> Date | null
+// (without enum and const: their values may be of the other type)
+const splitTypes = (s: Exclude<OAS3, boolean>, types: string[]) => {
+  return types.map(
+    (x) => ({ ...(x === "null" ? {} : omit(s, ["enum", "const"])), type: x }) as OAS3,
+  )
+}
+
+const makeLiteralUnion = (ctx: Context, schemas: OAS3[]): ts.TypeNode => {
+  const tokens = schemas.map((x) => makeType(ctx, x))
   const hasUnknown = tokens.some((x) => x.kind === ts.SyntaxKind.UnknownKeyword)
   if (hasUnknown) return f.createKeywordTypeNode(ts.SyntaxKind.UnknownKeyword)
   return f.createUnionTypeNode(tokens)
@@ -170,7 +179,7 @@ export const makeType = (ctx: Context, s?: Referenced<OAS3>): ts.TypeNode => {
     else if (s.type === "number") t = f.createKeywordTypeNode(ts.SyntaxKind.NumberKeyword)
     else if (s.type === "string") t = f.createKeywordTypeNode(ts.SyntaxKind.StringKeyword)
     else if (s.type === "null") t = f.createLiteralTypeNode(f.createNull())
-    else if (isArray(s.type)) t = makeLiteralUnion(ctx, s.type)
+    else if (isArray(s.type)) t = makeLiteralUnion(ctx, splitTypes(s, s.type))
     else if (s.type === "array" && isPrefixItems(s) && s.prefixItems && !s.items)
       t = f.createTupleTypeNode(s.prefixItems.map(mk))
     else if (s.type === "array" && !isBoolean(s.items)) t = f.createArrayTypeNode(mk(s.items))
@@ -194,6 +203,63 @@ export const makeType = (ctx: Context, s?: Referenced<OAS3>): ts.TypeNode => {
 
   // throw new Error(`makeType: unknown schema ${JSON.stringify(s)}`)
   return f.createKeywordTypeNode(ts.SyntaxKind.UnknownKeyword)
+}
+
+const joinDates = (items: (ApigenDates | undefined)[]) => {
+  const shapes = uniqWith(
+    items.filter((x) => x !== undefined),
+    isEqual,
+  )
+  return shapes.length > 1 ? shapes : shapes[0]
+}
+
+const mapDates = (items: [string, ApigenDates | undefined][]) => {
+  const shapes = items.filter(([, v]) => v !== undefined)
+  return shapes.length ? (Object.fromEntries(shapes) as ApigenDates) : undefined
+}
+
+// where makeType gives Date, for PopulateDates in _template.ts; undefined when nowhere
+export const makeDates = (ctx: Context, s?: Referenced<OAS3>): ApigenDates | undefined => {
+  const mk = makeDates.bind(null, ctx)
+
+  if (!ctx.parseDates || s === undefined || s === null || isBoolean(s)) return undefined
+
+  if ("$ref" in s && s.$ref) {
+    const parts = s.$ref.replace("#/", "").split("/")
+    if (parts.length === 3 && parts[0] === "components" && parts[1] === "schemas") {
+      // named schemas go by name, see prepareDates
+      const name = normalizeIdentifier(parts[2], true)
+      return ctx.dateShapes.has(name) ? name : undefined
+    }
+
+    // expand like in makeType
+    return mk(unref(ctx, s))
+  }
+
+  if ("oneOf" in s && s.oneOf) return joinDates(s.oneOf.map(mk))
+  if ("anyOf" in s && s.anyOf) return joinDates(s.anyOf.map(mk))
+  if ("allOf" in s && s.allOf) return joinDates(s.allOf.map(mk))
+
+  if (makeConst(s)) return undefined
+  if ("enum" in s && s.enum && !Array.isArray(s.type)) return undefined
+
+  if ("properties" in s && s.properties) {
+    return mapDates(Object.entries(s.properties).map(([k, v]) => [k, mk(v)]))
+  }
+
+  if (!("type" in s)) return undefined
+  if (isArray(s.type)) return joinDates(splitTypes(s, s.type).map(mk))
+
+  if (s.type === "string" && s.format === "date-time") return true
+  if (s.type === "object" && s.additionalProperties && !isBoolean(s.additionalProperties)) {
+    return mapDates([["*", mk(s.additionalProperties)]])
+  }
+  if (s.type === "array" && isPrefixItems(s) && s.prefixItems && !s.items) {
+    return mapDates(s.prefixItems.map((x, i) => [String(i), mk(x)]))
+  }
+  if (s.type === "array" && !isBoolean(s.items)) return mapDates([["*", mk(s.items)]])
+
+  return undefined
 }
 
 const isStringEnum = (s: Referenced<OAS3>): s is Oas3Schema & { enum: string[] } => {

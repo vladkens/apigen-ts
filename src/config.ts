@@ -1,6 +1,7 @@
 import type { Oas3Definition, Oas3Operation } from "@redocly/openapi-core"
 import { cli } from "cleye"
 import { name, version } from "../package.json"
+import type { ApigenDates } from "./_template"
 
 export type OpConfig = Oas3Operation & { method: string; path: string }
 export type OpName = [string, string]
@@ -19,7 +20,13 @@ export type Config = {
   headers: Record<string, string>
 }
 
-export type Context = Config & { doc: Oas3Definition; logTag: string; usedNames: Set<string> }
+export type Context = Config & {
+  doc: Oas3Definition
+  logTag: string
+  usedNames: Set<string>
+  dateShapes: Map<string, ApigenDates> // named schemas with date-time fields
+  usesDates: boolean // some response has date-time fields
+}
 
 export const initCtx = (config?: Partial<Context>): Context => {
   return {
@@ -34,6 +41,8 @@ export const initCtx = (config?: Partial<Context>): Context => {
     ...config,
     logTag: "",
     usedNames: new Set(),
+    dateShapes: new Map(),
+    usesDates: false,
   }
 }
 
