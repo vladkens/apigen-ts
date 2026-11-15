@@ -51,6 +51,12 @@ test("operation name", async () => {
   equal(t("get", "/api/1.0/users", ["users"], ""), "users.getUsers")
   equal(t("get", "/api/1/users", ["users"], ""), "users.getUsers")
 
+  // only articles or no latin letters
+  equal(t("get", "/users", ["a"], "getUsers"), "a.getUsers")
+  equal(t("get", "/users", ["the"], "the"), "the.the")
+  equal(t("get", "/users", ["Пользователи"], "getUsers"), "general.getUsers")
+  equal(t("get", "/users/{id}", ["users"], "получить"), "users.getUsersId")
+
   // reserved name
   // equal(t("get", "/fetch", ["fetch"], "fetch"), "users.getUsers")
 })
