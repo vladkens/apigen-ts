@@ -16,6 +16,7 @@
 
 - Updated dependencies, including `@redocly/openapi-core` with patched `fast-uri` and `js-yaml`
 - Dependency updates now wait 7 days after a package is published
+- Releases are published from CI with npm Trusted Publishing and provenance, with no npm token
 
 **Full Changelog**: https://github.com/vladkens/apigen-ts/compare/v1.4.0...v1.5.0
 
