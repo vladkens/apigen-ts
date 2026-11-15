@@ -21,7 +21,7 @@ build:
 update:
 	pnpm self-update 11
 	pnpm update npm-check-updates --latest
-	pnpm exec npm-check-updates --reject typescript --upgrade && pnpm i
+	pnpm exec npm-check-updates --reject typescript,pnpm --cooldown 7 --upgrade && pnpm i
 
 examples:
 	pnpm exec tsx scripts/make-examples.ts

@@ -1,5 +1,27 @@
 # Changelog
 
+## v1.5.0 – 2026-11-15
+
+### Fixes
+
+- Skipped `undefined` and `null` values in query params and form bodies instead of sending them as strings (#31)
+- Sent query arrays as repeated keys (`?tags=a&tags=b`), the OpenAPI default; arrays with `explode: false` (including Swagger 2 default `csv`) are still joined, using the separator of their `style` (#31)
+- URL-encoded path params, so `/`, `?` and `#` stay inside the path segment (#31)
+
+### Upgrade notes
+
+- If your server expects comma-joined query arrays but the spec does not say so, set `explode: false` on those params in the spec
+
+### Maintenance
+
+- Updated dependencies, including `@redocly/openapi-core` with patched `fast-uri` and `js-yaml`
+- Dependency updates now wait 7 days after a package is published
+- Releases are published from CI with npm Trusted Publishing and provenance, with no npm token
+
+**Full Changelog**: https://github.com/vladkens/apigen-ts/compare/v1.4.0...v1.5.0
+
+---
+
 ## v1.4.0 – 2026-08-22
 
 ### Features
