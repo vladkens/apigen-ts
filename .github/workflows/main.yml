@@ -34,7 +34,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: vladkens/actions/npm-build@npm-actions
+      - uses: vladkens/actions/npm-build@v1
 
   publish:
     if: github.ref == 'refs/heads/main'
@@ -45,4 +45,4 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@v7
-      - uses: vladkens/actions/npm-publish@npm-actions
+      - uses: vladkens/actions/npm-publish@v1
