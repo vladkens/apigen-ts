@@ -1,5 +1,20 @@
 # Changelog
 
+## v1.5.1 – 2026-11-16
+
+### Fixes
+
+- Fixed generation next to TypeScript 7, whose `typescript` package has no compiler API: apigen-ts now ships its own TypeScript 6 for generation; generated clients type-check with TypeScript 5, 6 and 7
+- Fixed a crash on tags and `operationId`s with no latin words (`a`, `the`, Cyrillic or Chinese): such tags go to `general`, such operation names are made from the method and path (#34)
+
+### Docs
+
+- Rewrote the readme: the generated code up front, all options in one table, a comparison with other generators; the `resolveName` example used `op.name`, which does not exist
+
+**Full Changelog**: https://github.com/vladkens/apigen-ts/compare/v1.5.0...v1.5.1
+
+---
+
 ## v1.5.0 – 2026-11-15
 
 ### Fixes
