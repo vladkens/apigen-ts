@@ -5,14 +5,19 @@
   "license": "MIT",
   "author": "vladkens <v.pronsky@gmail.com>",
   "repository": "vladkens/apigen-ts",
-  "description": "Simple typed OpenAPI client generator",
+  "description": "Generate a typed TypeScript client from OpenAPI or Swagger in one file: a method per endpoint, plain fetch, no runtime dependencies.",
   "keywords": [
     "openapi",
     "swagger",
     "typescript",
-    "api",
+    "api-client",
+    "client",
+    "sdk",
+    "fetch",
     "generator",
-    "codegen"
+    "codegen",
+    "openapi3",
+    "swagger2"
   ],
   "scripts": {
     "build": "rm -rf dist && pkgroll && cp ./src/_template.ts ./dist && ls -lah dist",

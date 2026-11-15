@@ -14,17 +14,54 @@
   <img src="./logo.svg" alt="apigen-ts logo" height="80" />
 </div>
 
-Turn your OpenAPI spec into a typed TypeScript client with one command.
+**Your OpenAPI spec as one typed file.** apigen-ts turns an OpenAPI or Swagger spec into a TypeScript client you can call right away: a method for every endpoint, a type for every schema, plain `fetch`, no runtime dependencies.
 
-- **One file.** Outputs a single `api-client.ts` — no scattered modules, no runtime deps in generated code.
-- **Fully typed.** Every method returns the exact response type from your schema. No casting, no `any`.
-- **Pure Node.js.** No Java, no Docker. Works with `pnpm` in any project.
-- **Fetch-based.** Uses native `fetch`. Override it with your own function for auth, retries, or logging.
-- **All OpenAPI versions.** Supports v2 (Swagger), v3, and v3.1 — auto-upgrades v2 on the fly.
-- **Extras built in.** Automatic date parsing, string literal unions instead of enums, Prettier formatting.
-- **Filterable.** Include or exclude endpoints by path regex or tag — essential for large schemas.
+```sh
+pnpm add -D apigen-ts
+pnpm apigen-ts https://petstore3.swagger.io/api/v3/openapi.json ./api-client.ts
+```
 
-Unlike `openapi-typescript`, it generates a ready-to-call client — not just types. Unlike `openapi-generator-cli`, it's pure Node.js with zero Java dependency. Unlike `openapi-typescript-codegen`, it outputs a single file.
+```ts
+import { ApiClient } from "./api-client"
+
+const api = new ApiClient({ baseUrl: "https://petstore3.swagger.io/api/v3" })
+
+const pet = await api.pet.getPetById(1) // → Pet
+const sold = await api.pet.findPetsByStatus({ status: "sold" }) // → Pet[]
+await api.pet.updatePet({ ...pet, status: "sold" })
+```
+
+The generated `api-client.ts` is plain code you can read:
+
+```ts
+export class ApiClient {
+  // ~100 lines: fetch, headers, errors
+
+  pet = {
+    getPetById: (petId: number) => {
+      return this.Fetch<Pet>("GET", `/pet/${this.EncodePathParam(petId)}`, {})
+    },
+    // …one method per endpoint
+  }
+}
+
+export type Pet = {
+  id?: number
+  name: string
+  status?: "available" | "pending" | "sold"
+  // …
+}
+```
+
+## Why apigen-ts
+
+- **One file you own.** Commit it, review it in a PR, see what changed when the API changes. Nothing to install at runtime, nothing hidden in `node_modules`, and a coding agent can read the whole client at once.
+- **Methods, not URL strings.** `api.pet.getPetById(1)` takes typed arguments and resolves to the typed response body. Non-2xx responses throw.
+- **Any spec.** Swagger 2.0 and OpenAPI 3.0, 3.1 and 3.2, JSON or YAML, from a file or a URL.
+- **Correct requests.** Path params are URL-encoded, query arrays follow the spec's `style` and `explode`, `undefined` values are left out.
+- **Pure Node.js.** No Java, no Docker, no config file. The client type-checks with TypeScript 5, 6 and 7.
+- **Big specs welcome.** Keep only the paths or tags you use (Cloudflare's spec is 8 MB).
+- **Small extras.** `Date` parsing, string unions instead of enums, `AbortSignal` and other fetch options per call, formatting with your Prettier config.
 
 ## Install
 
@@ -32,157 +69,101 @@ Unlike `openapi-typescript`, it generates a ready-to-call client — not just ty
 pnpm add -D apigen-ts
 ```
 
-## Usage
-
-### 1. Generate
+## Generate
 
 ```sh
-# From a local file
-pnpm apigen-ts ./openapi.json ./api-client.ts
+# from a file, JSON or YAML
+pnpm apigen-ts ./openapi.yaml ./api-client.ts
 
-# From a URL
+# from a URL
 pnpm apigen-ts https://petstore3.swagger.io/api/v3/openapi.json ./api-client.ts
 
-# From a protected URL
+# from a protected URL
 pnpm apigen-ts https://secret-api.example.com ./api-client.ts -H "x-api-key: secret-key"
+
+# to stdout
+pnpm apigen-ts ./openapi.json > ./api-client.ts
 ```
 
-Run `pnpm apigen-ts --help` for all options. See [generated examples](./examples/).
+See the [generated examples](./examples/).
 
-### 2. Import
+## Options
+
+| Flag                    | Node.js API    | Default     | Effect                                                                            |
+| ----------------------- | -------------- | ----------- | --------------------------------------------------------------------------------- |
+| `--name`                | `name`         | `ApiClient` | Name of the generated class                                                       |
+| `--parse-dates`         | `parseDates`   | `false`     | `date-time` fields become `Date` objects, in types and in responses               |
+| `--inline-enums`        | `inlineEnums`  | `false`     | String unions instead of `enum`s, for Node.js [type stripping][type-stripping]    |
+| `--fetch-options`       | `fetchOptions` | `false`     | Adds an optional last argument to every method with [fetch options][request-init] |
+| `--filter-paths <re>`   | `filterPaths`  | –           | Keeps only paths matching a regex; the Node.js API also takes a function          |
+| `--include-tags <tags>` | `includeTags`  | –           | Keeps only operations with these tags, comma-separated or repeated                |
+| `--exclude-tags <tags>` | `excludeTags`  | –           | Drops operations with these tags; wins over `--include-tags`                      |
+| `-H "key: value"`       | `headers`      | –           | HTTP header for downloading the spec; the client does not get it                  |
+| –                       | `resolveName`  | –           | Your own `[namespace, method]` names, see [Node.js API](#nodejs-api)              |
+
+[type-stripping]: https://nodejs.org/api/typescript.html#type-stripping
+[request-init]: https://developer.mozilla.org/en-US/docs/Web/API/RequestInit
+
+```sh
+pnpm apigen-ts ./openapi.json ./api-client.ts --parse-dates --inline-enums
+pnpm apigen-ts ./openapi.json ./api-client.ts --filter-paths '^/accounts'
+pnpm apigen-ts ./openapi.json ./api-client.ts --include-tags pets,store --exclude-tags internal
+```
+
+## Usage
+
+### Auth and headers
+
+`headers` is an object or a function, sync or async, called before every request:
 
 ```ts
-import { ApiClient } from "./api-client"
-
 const api = new ApiClient({
   baseUrl: "https://example.com/api",
-  headers: { Authorization: "secret-token" },
+  headers: async () => ({ Authorization: `Bearer ${await getToken()}` }),
 })
+
+// or change them later, e.g. after login
+api.Config.headers = { Authorization: "Bearer token" }
 ```
 
-### 3. Use
+### Cancel a request
 
-```ts
-// GET /pet/{petId}
-await api.pet.getPetById(1) // → Pet
-
-// GET /pet/findByStatus?status=sold
-await api.pet.findPetsByStatus({ status: "sold" }) // → Pet[]
-
-// PUT /user/{username} — second arg is typed request body
-await api.user.updateUser("username", { firstName: "John" })
-```
-
-## Advanced
-
-### Login flow
-
-```ts
-const { token } = await api.auth.login({ username, password })
-api.Config.headers = { Authorization: token }
-
-await api.protectedRoute.get() // authenticated
-```
-
-### Automatic date parsing
-
-```sh
-pnpm apigen-ts ./openapi.json ./api-client.ts --parse-dates
-```
-
-```ts
-const pet = await api.pet.getPetById(1)
-const createdAt: Date = pet.createdAt // parsed from format=date-time string
-```
-
-### String unions instead of enums
-
-Pass `--inline-enums` to generate string literal unions — useful for Node.js [type stripping](https://nodejs.org/api/typescript.html#type-stripping):
-
-```sh
-pnpm apigen-ts ./openapi.json ./api-client.ts --inline-enums
-```
-
-```ts
-// Generated:
-type MyEnum = "OptionA" | "OptionB"
-
-// Instead of:
-enum MyEnum {
-  OptionA = "OptionA",
-  OptionB = "OptionB",
-}
-```
-
-### Filter by path
-
-Include only the endpoints you need — useful with large schemas (e.g. Cloudflare's 8 MB monolith):
-
-```sh
-pnpm apigen-ts ./openapi.json ./api-client.ts --filter-paths '^/accounts'
-```
-
-### Filter by tag
-
-```sh
-# include only endpoints tagged "pets" or "store"
-pnpm apigen-ts ./openapi.json ./api-client.ts --include-tags pets,store
-
-# exclude endpoints tagged "internal"
-pnpm apigen-ts ./openapi.json ./api-client.ts --exclude-tags internal
-```
-
-When both flags are set, `--exclude-tags` wins.
-
-### Fetch options
-
-Pass `--fetch-options` to add an optional last argument to every generated method, accepting any [`RequestInit`](https://developer.mozilla.org/en-US/docs/Web/API/RequestInit) field:
-
-```sh
-pnpm apigen-ts ./openapi.json ./api-client.ts --fetch-options
-```
+With `--fetch-options`, every method takes any [fetch option][request-init] as its last argument:
 
 ```ts
 const controller = new AbortController()
+setTimeout(() => controller.abort(), 1000)
 await api.pet.getPetById(1, { signal: controller.signal })
 
-// cancel the request
-controller.abort()
-
-// or disable automatic redirects for a single request
 await api.pet.getPetById(1, { redirect: "manual" })
 ```
 
-### Error handling
+### Errors
 
-Non-2xx responses throw — the caught value is the parsed response body:
+Non-2xx responses throw the parsed JSON body, or the `Response` itself when the body is not JSON. Override `ParseError` to change what is thrown:
 
 ```ts
 try {
   await api.pet.getPetById(404)
 } catch (e) {
-  console.log(e) // awaited response.json()
+  console.log(e) // the error body from the server
 }
-```
 
-Override `ParseError` to control the shape:
-
-```ts
 class MyClient extends ApiClient {
   async ParseError(rep: Response) {
-    return { code: "API_ERROR" }
+    return { code: "API_ERROR", status: rep.status }
   }
 }
 ```
 
-### Base URL resolving
+### Base URL
 
-By default uses the [URL constructor](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL): `new URL(path, baseUrl)`. Notable behavior:
+Paths are resolved with [`new URL(path, baseUrl)`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL), so a path starting with `/` replaces the base path:
 
 - `new URL("/v2/cats", "https://example.com/v1/")` → `https://example.com/v2/cats`
 - `new URL("v2/cats", "https://example.com/v1/")` → `https://example.com/v1/v2/cats`
 
-Override `PrepareFetchUrl` to change this (see [#2](https://github.com/vladkens/apigen-ts/issues/2)):
+Override `PrepareFetchUrl` to join them instead (see [#2](https://github.com/vladkens/apigen-ts/issues/2)):
 
 ```ts
 class MyClient extends ApiClient {
@@ -195,36 +176,35 @@ const api = new MyClient({ baseUrl: "https://example.com/v1" })
 await api.pet.getPetById(1) // → https://example.com/v1/pet/1
 ```
 
+`Fetch`, `EncodePathParam` and `JoinQueryParam` can be overridden the same way.
+
 ### Node.js API
 
-```js
+```ts
 import { apigen } from "apigen-ts"
 
 await apigen({
   source: "https://petstore3.swagger.io/api/v3/openapi.json",
   output: "./api-client.ts",
-  // optional:
-  name: "MyApiClient", // default: "ApiClient"
-  parseDates: true, // default: false
-  inlineEnums: false, // default: false
-  fetchOptions: true, // default: false
-  filterPaths: /^\/pets/, // only include paths matching regex
-  includeTags: ["pets", "store"], // only include these tags
-  excludeTags: ["internal"], // exclude these tags (wins over includeTags)
+  // optional, see Options
+  name: "PetstoreClient",
+  parseDates: true,
+  filterPaths: (path) => path.startsWith("/pet"),
+  includeTags: ["pet", "store"],
   headers: { "x-api-key": "secret-key" },
   resolveName(ctx, op, proposal) {
-    // proposal is [namespace, methodName]
-    if (proposal[0] === "users") return // use default
+    // proposal is [namespace, method]
+    if (proposal[0] === "pet") return // keep the default
 
-    const [a, b] = op.name.split("/").slice(3, 5) // /api/v1/store/items/search
+    const [a, b] = op.path.split("/").slice(3, 5) // /api/v1/store/items/search
     return [a, `${op.method}_${b}`] // → api.store.get_items()
   },
 })
 ```
 
-## Usage with FastAPI
+### FastAPI
 
-By default, FastAPI generates verbose `operationId`s. Fix with a custom resolver:
+FastAPI makes long `operationId`s like `read_items_items__get`. Give them short names before exporting the spec:
 
 ```py
 from fastapi import FastAPI
@@ -244,18 +224,17 @@ def update_operation_ids(app: FastAPI) -> None:
 update_operation_ids(app)
 ```
 
-## Alternatives
+## Compared to others
 
-| Package                                                                                 | Issue                                                                                                                          |
-| --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| [openapi-typescript-codegen](https://github.com/ferdikoomen/openapi-typescript-codegen) | No single-file output ([#1263](https://github.com/ferdikoomen/openapi-typescript-codegen/issues/1263#issuecomment-1502890838)) |
-| [openapi-typescript](https://github.com/drwpow/openapi-typescript)                      | Low-level types only — no callable client, no named type exports                                                               |
-| [openapi-generator-cli](https://github.com/OpenAPITools/openapi-generator-cli)          | Wraps a Java library                                                                                                           |
-| [swagger-typescript-api](https://github.com/acacode/swagger-typescript-api)             | Complex config, breaking API changes between versions                                                                          |
+|                                                                                                                                            | Output                    | A call                                                           | Returns                                         |
+| ------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------- | ---------------------------------------------------------------- | ----------------------------------------------- |
+| **apigen-ts**                                                                                                                              | one file, no runtime deps | `api.pet.getPetById(1)`                                          | the body, throws on errors                      |
+| [openapi-typescript](https://github.com/openapi-ts/openapi-typescript) + [openapi-fetch](https://github.com/openapi-ts/openapi-typescript) | types + a runtime package | `client.GET("/pet/{petId}", { params: { path: { petId: 1 } } })` | `{ data, error }`                               |
+| [@hey-api/openapi-ts](https://github.com/hey-api/hey-api)                                                                                  | a folder of files         | `getPetById({ path: { petId: 1 } })`                             | `{ data, error }` by default                    |
+| [swagger-typescript-api](https://github.com/acacode/swagger-typescript-api)                                                                | one file                  | `api.pet.getPetById(1)`                                          | a `Response` with `data` and `error` by default |
 
-## Development
+Need React Query hooks, Zod schemas or mocks? Take [@hey-api/openapi-ts](https://github.com/hey-api/hey-api) or [orval](https://github.com/orval-labs/orval). apigen-ts makes the client and nothing else.
 
-- https://ts-ast-viewer.com
-- https://jsonschemalint.com
-- https://redocly.github.io/redoc/
-- https://swagger.io/docs/specification/basic-structure/
+## License
+
+[MIT](LICENSE)
